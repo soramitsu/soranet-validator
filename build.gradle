@@ -95,8 +95,8 @@ wrapper {
 allprojects{
     sonarqube {
         properties {
-            property "sonar.github.repository", "d3ledger/notary"
-            property "sonar.projectKey", "d3:notary"
+            property "sonar.github.repository", "soramitsu/soranet-notary"
+            property "sonar.projectKey", "soranet:notary"
             property "sonar.java.binaries", "${project.projectDir}/build/classes"
             property "sonar.java.libraries", "${project.projectDir}/build/libs"
             property "sonar.java.test.binaries", "${project.projectDir}/build/test-results/test/binary"
