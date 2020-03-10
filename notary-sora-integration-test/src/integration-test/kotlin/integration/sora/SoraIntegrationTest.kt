@@ -5,6 +5,7 @@
 
 package integration.sora
 
+import com.d3.commons.model.NotaryGenericResponse
 import com.d3.commons.registration.MappingRegistrationResponse
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.util.GsonInstance
@@ -235,11 +236,11 @@ class SoraIntegrationTest {
 
         val res = registrationEnvironment.register(name, pubkey, domain)
 
-        assertEquals(500, res.statusCode)
+        assertEquals(200, res.statusCode)
 
         val response = gsonInstace.fromJson(
             res.jsonObject.toString(),
-            MappingRegistrationResponse::class.java
+            NotaryGenericResponse::class.java
         )!!
 
         assertNotNull(response.status.code)

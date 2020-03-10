@@ -121,12 +121,12 @@ class RegistrationServiceEndpoint(
         var reason = ""
         if (name.isNullOrEmpty()) reason = reason.plus("Parameter \"name\" is not specified. ")
         if (domain.isNullOrEmpty()) reason = reason.plus("Parameter \"domain\" is not specified. ")
-        if (pubkey == null) reason = reason.plus("Parameter \"pubkey\" is not specified.")
+        if (pubkey == null || pubkey.length != 32) reason = reason.plus("Parameter \"pubkey\" is invalid.")
 
-        if (name.isNullOrEmpty() || domain.isNullOrEmpty() || pubkey == null) {
+        if (reason.isNotEmpty()) {
             throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
         }
-        registrationStrategy.register(name, domain, pubkey).fold(
+        registrationStrategy.register(name!!, domain!!, pubkey!!).fold(
             { address ->
                 logger.info {
                     "Client $name@$domain was successfully registered with address $address"
