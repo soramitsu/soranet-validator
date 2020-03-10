@@ -37,9 +37,6 @@ dependencies {
     // khttp - consume http
     implementation 'khttp:khttp:0.1.0'
 
-    // JSON converter
-    implementation 'com.squareup.moshi:moshi-kotlin:1.5.0'
-
     // for Result
     implementation group: 'com.github.kittinunf.result', name: 'result', version: '1.4.0'
 
