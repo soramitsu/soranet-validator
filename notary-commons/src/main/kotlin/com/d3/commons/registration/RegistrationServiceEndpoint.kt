@@ -5,18 +5,18 @@
 
 package com.d3.commons.registration
 
-import com.squareup.moshi.Moshi
+import com.d3.commons.model.NotaryException
+import com.d3.commons.model.NotaryExceptionErrorCode
+import com.d3.commons.model.NotaryGenericResponse
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CORS
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.StatusPages
 import io.ktor.gson.gson
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -24,7 +24,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import mu.KLogging
 
-data class Response(val code: HttpStatusCode, val message: String)
+data class MappingRegistrationResponse(val responseMap: Map<*, *>) : NotaryGenericResponse()
+data class MessagedRegistrationResponse(val message: String) : NotaryGenericResponse()
 
 /**
  * Registration HTTP service
@@ -40,10 +41,6 @@ class RegistrationServiceEndpoint(
         null
     )
 
-    // Moshi adapter for response serialization
-    val moshiAdapter = Moshi.Builder().build()!!.adapter(Map::class.java)!!
-
-
     init {
         logger.info { "Start registration server on port $port" }
 
@@ -56,6 +53,11 @@ class RegistrationServiceEndpoint(
             install(ContentNegotiation) {
                 gson()
             }
+            install(StatusPages) {
+                exception<NotaryException> { cause ->
+                    call.respond(NotaryGenericResponse(cause.code, cause.message ?: ""))
+                }
+            }
             routing {
                 post("/users") {
                     val parameters = call.receiveParameters()
@@ -64,11 +66,7 @@ class RegistrationServiceEndpoint(
                     val domain = determineDomain(domain, parameters["domain"])
 
                     val response = invokeRegistration(name, domain, pubkey)
-                    call.respondText(
-                        response.message,
-                        status = response.code,
-                        contentType = ContentType.Application.Json
-                    )
+                    call.respond(response)
                 }
 
                 post("/users/json") {
@@ -78,16 +76,12 @@ class RegistrationServiceEndpoint(
                     val domain = determineDomain(domain, body.domain)
 
                     val response = invokeRegistration(name, domain, pubkey)
-                    call.respondText(
-                        response.message,
-                        status = response.code,
-                        contentType = ContentType.Application.Json
-                    )
+                    call.respond(response)
                 }
 
                 get("free-addresses/number") {
                     val response = onGetFreeAddressesNumber()
-                    call.respondText(response.message, status = response.code)
+                    call.respond(response)
                 }
 
                 get("/actuator/health") {
@@ -114,58 +108,46 @@ class RegistrationServiceEndpoint(
         name: String?,
         domain: String?,
         pubkey: String?
-    ): Response {
+    ): MappingRegistrationResponse {
         logger.info { "Registration invoked with parameters (name = \"$name\", domain = \"$domain\", pubkey = \"$pubkey\"" }
         return onPostRegistration(name, domain, pubkey)
-    }
-
-    private fun responseError(code: HttpStatusCode, reason: String): Response {
-        logger.error { "Response has been failed with code $code. $reason" }
-        return Response(code, reason)
     }
 
     private fun onPostRegistration(
         name: String?,
         domain: String?,
         pubkey: String?
-    ): Response {
+    ): MappingRegistrationResponse {
         var reason = ""
         if (name.isNullOrEmpty()) reason = reason.plus("Parameter \"name\" is not specified. ")
         if (domain.isNullOrEmpty()) reason = reason.plus("Parameter \"domain\" is not specified. ")
         if (pubkey == null) reason = reason.plus("Parameter \"pubkey\" is not specified.")
 
         if (name.isNullOrEmpty() || domain.isNullOrEmpty() || pubkey == null) {
-            return responseError(HttpStatusCode.BadRequest, reason)
+            throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
         }
         registrationStrategy.register(name, domain, pubkey).fold(
             { address ->
                 logger.info {
                     "Client $name@$domain was successfully registered with address $address"
                 }
-
                 val response = mapOf("clientId" to address)
-                val serialized = moshiAdapter.toJson(response)
-
-                return Response(HttpStatusCode.OK, serialized)
+                return MappingRegistrationResponse(response)
             },
             { ex ->
                 logger.error("Cannot register client $name", ex)
-
-                val response = mapOf("message" to ex.message, "details" to ex.toString())
-                val serialized = moshiAdapter.toJson(response)
-
-                return responseError(HttpStatusCode.InternalServerError, serialized)
+                throw ex
             })
     }
 
-    private fun onGetFreeAddressesNumber(): Response {
+    private fun onGetFreeAddressesNumber(): MessagedRegistrationResponse {
         return registrationStrategy.getFreeAddressNumber()
             .fold(
                 {
-                    Response(HttpStatusCode.OK, it.toString())
+                    MessagedRegistrationResponse(it.toString())
                 },
                 {
-                    responseError(HttpStatusCode.InternalServerError, it.toString())
+                    throw it
                 }
             )
     }
