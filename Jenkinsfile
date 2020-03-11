@@ -4,7 +4,6 @@ pipeline {
     DOCKER_NETWORK = ''
   }
   options {
-    skipDefaultCheckout()
     buildDiscarder(logRotator(numToKeepStr: '20'))
     timestamps()
     disableConcurrentBuilds()
