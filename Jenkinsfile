@@ -16,11 +16,10 @@ pipeline {
     stage('Tests') {
       steps {
         script {
-          def scmVars = checkout scm
           tmp = docker.image("openjdk:8-jdk")
           env.WORKSPACE = pwd()
 
-          DOCKER_NETWORK = "${scmVars.CHANGE_ID}-${scmVars.GIT_COMMIT}-${BUILD_NUMBER}"
+          DOCKER_NETWORK = "${env.CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
           writeFile file: ".env", text: "SUBNET=${DOCKER_NETWORK}"
           withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-ro', usernameVariable: 'login', passwordVariable: 'password')]) {
             sh "docker login nexus.iroha.tech:19004 -u ${login} -p '${password}'"
@@ -93,7 +92,6 @@ pipeline {
     stage('Build and push docker images') {
       steps {
         script {
-          def scmVars = checkout scm
           if (env.BRANCH_NAME ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
                 withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'login', passwordVariable: 'password')]) {
                   TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
