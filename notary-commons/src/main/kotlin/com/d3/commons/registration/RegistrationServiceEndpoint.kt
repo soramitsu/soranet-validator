@@ -121,7 +121,7 @@ class RegistrationServiceEndpoint(
         var reason = ""
         if (name.isNullOrEmpty()) reason = reason.plus("Parameter \"name\" is not specified. ")
         if (domain.isNullOrEmpty()) reason = reason.plus("Parameter \"domain\" is not specified. ")
-        if (pubkey == null || pubkey.length != 32) reason = reason.plus("Parameter \"pubkey\" is invalid.")
+        if (pubkey == null || pubkey.length != 64) reason = reason.plus("Parameter \"pubkey\" is invalid.")
 
         if (reason.isNotEmpty()) {
             throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
