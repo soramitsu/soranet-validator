@@ -86,7 +86,7 @@ services:
       - d3-network
 
   d3-brvs:
-    image: nexus.iroha.tech:19002/brvs-deploy/brvs-core:develop
+    image: nexus.iroha.tech:19004/soranet/brvs-core:develop
     container_name: d3-brvs
     ports:
       - 8080:8080
@@ -109,7 +109,7 @@ services:
     restart: always
 
   data-collector:
-    image: nexus.iroha.tech:19002/d3-deploy/data-collector:develop
+    image: nexus.iroha.tech:19004/soranet/data-collector:develop
     container_name: "data-collector"
     restart: on-failure
     ports:
@@ -132,7 +132,7 @@ services:
       - d3-network
 
   report-service:
-    image: nexus.iroha.tech:19002/d3-deploy/report-service:develop
+    image: nexus.iroha.tech:19004/soranet/report-service:develop
     container_name: "report-service"
     restart: on-failure
     ports:
