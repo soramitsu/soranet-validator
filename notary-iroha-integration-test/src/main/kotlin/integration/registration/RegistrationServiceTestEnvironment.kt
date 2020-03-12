@@ -70,7 +70,7 @@ class RegistrationServiceTestEnvironment(private val integrationHelper: IrohaInt
         domain: String = D3_DOMAIN
     ): Response {
         return khttp.post(
-            "http://127.0.0.1:${registrationConfig.port}/users",
+            "http://127.0.0.1:${registrationConfig.port}/v2/users",
             data = mapOf("name" to name, "pubkey" to pubkey, "domain" to domain)
         )
     }
