@@ -15,9 +15,13 @@ class NotaryException(
     val code: NotaryExceptionErrorCode,
     override val message: String?,
     override val cause: Throwable?
-) : RuntimeException(message, cause) {
+) : Exception(message, cause) {
     constructor(code: NotaryExceptionErrorCode, message: String?) : this(code, message, null)
 }
+
+class NotaryV1Exception(
+    override val message: String?
+) : Exception(message)
 
 data class NotaryResponseStatus(var code: NotaryExceptionErrorCode?, var message: String?) {
     // for databind
