@@ -29,8 +29,6 @@ dependencies {
 
     implementation 'khttp:khttp:0.1.0'
 
-    implementation 'com.squareup.moshi:moshi-kotlin:1.5.0'
-
     // unit tests
     testImplementation('org.junit.jupiter:junit-jupiter-api:5.2.0')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
