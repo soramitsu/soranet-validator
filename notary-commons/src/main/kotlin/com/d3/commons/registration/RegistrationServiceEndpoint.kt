@@ -131,26 +131,18 @@ class RegistrationServiceEndpoint(
         isNew: Boolean
     ): Any {
         logger.info { "Registration invoked with parameters (name = \"$name\", domain = \"$domain\", pubkey = \"$pubkey\"" }
-        return if (isNew) {
-            checkNew(name, domain, pubkey)
-            onPostRegistrationNew(name!!, domain!!, pubkey!!)
-        } else {
-            checkOld(name, domain, pubkey)
-            onPostRegistrationOld(name!!, domain!!, pubkey!!)
-        }
+        check(name, domain, pubkey, isNew)
+        return onPostRegistration(name!!, domain!!, pubkey!!, isNew)
     }
 
-    private fun checkOld(name: String?, domain: String?, pubkey: String?) {
+    private fun check(name: String?, domain: String?, pubkey: String?, isNew: Boolean) {
         val reason = validateInputs(name, domain, pubkey)
         if (reason.isNotEmpty()) {
-            throw OldNotaryException(reason)
-        }
-    }
-
-    private fun checkNew(name: String?, domain: String?, pubkey: String?) {
-        val reason = validateInputs(name, domain, pubkey)
-        if (reason.isNotEmpty()) {
-            throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
+            if (isNew) {
+                throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
+            } else {
+                throw OldNotaryException(reason)
+            }
         }
     }
 
@@ -162,41 +154,24 @@ class RegistrationServiceEndpoint(
         return reason
     }
 
-    private fun onPostRegistrationNew(
+    private fun onPostRegistration(
         name: String,
         domain: String,
-        pubkey: String
-    ): MappingRegistrationResponse {
+        pubkey: String,
+        isNew: Boolean
+    ): Any {
         registrationStrategy.register(name, domain, pubkey).fold(
             { address ->
                 logger.info {
                     "Client $name@$domain was successfully registered with address $address"
                 }
                 val response = mapOf(CLIENT_ID to address)
-                return MappingRegistrationResponse(response)
+                return if (isNew) MappingRegistrationResponse(response)
+                else Response(HttpStatusCode.OK, GsonInstance.get().toJson(response))
             },
             { ex ->
                 logger.error("Cannot register client $name", ex)
-                throw ex
-            })
-    }
-
-    private fun onPostRegistrationOld(
-        name: String,
-        domain: String,
-        pubkey: String
-    ): Response {
-        registrationStrategy.register(name, domain, pubkey).fold(
-            { address ->
-                logger.info {
-                    "Client $name@$domain was successfully registered with address $address"
-                }
-                val response = mapOf(CLIENT_ID to address)
-                return Response(HttpStatusCode.OK, GsonInstance.get().toJson(response))
-            },
-            { ex ->
-                logger.error("Cannot register client $name", ex)
-                if (ex is NotaryException) {
+                if (!isNew && ex is NotaryException) {
                     return Response(
                         HttpStatusCode.OK,
                         GsonInstance.get().toJson(mapOf(CLIENT_ID to "$name@$domain"))
