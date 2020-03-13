@@ -8,7 +8,7 @@ package com.d3.commons.registration
 import com.d3.commons.model.NotaryException
 import com.d3.commons.model.NotaryExceptionErrorCode
 import com.d3.commons.model.NotaryGenericResponse
-import com.d3.commons.model.NotaryV1Exception
+import com.d3.commons.model.OldNotaryException
 import com.d3.commons.util.GsonInstance
 import io.ktor.application.call
 import io.ktor.application.install
@@ -61,7 +61,7 @@ class RegistrationServiceEndpoint(
                 exception<NotaryException> { cause ->
                     call.respond(NotaryGenericResponse(cause.code, cause.message ?: ""))
                 }
-                exception<NotaryV1Exception> { cause ->
+                exception<OldNotaryException> { cause ->
                     call.respond(Response(HttpStatusCode.BadRequest, cause.message ?: ""))
                 }
             }
@@ -78,13 +78,13 @@ class RegistrationServiceEndpoint(
                     call.respond(response)
                 }
 
-                post("/v2/users") {
+                post("$V1/users") {
                     val parameters = call.receiveParameters()
                     val response = invokeRegistrationFromParameters(parameters, true)
                     call.respond(response)
                 }
 
-                post("/v2/users/json") {
+                post("$V1/users/json") {
                     val body = call.receive(UserDto::class)
                     val response = invokeRegistrationFromDto(body, true)
                     call.respond(response)
@@ -143,7 +143,7 @@ class RegistrationServiceEndpoint(
     private fun checkV1(name: String?, domain: String?, pubkey: String?) {
         val reason = validateInputs(name, domain, pubkey)
         if (reason.isNotEmpty()) {
-            throw NotaryV1Exception(reason)
+            throw OldNotaryException(reason)
         }
     }
 
@@ -211,6 +211,7 @@ class RegistrationServiceEndpoint(
      */
     companion object : KLogging() {
         const val CLIENT_ID = "clientId"
+        const val V1 = "/v1"
     }
 }
 

@@ -19,7 +19,7 @@ class NotaryException(
     constructor(code: NotaryExceptionErrorCode, message: String?) : this(code, message, null)
 }
 
-class NotaryV1Exception(
+class OldNotaryException(
     override val message: String?
 ) : Exception(message)
 
