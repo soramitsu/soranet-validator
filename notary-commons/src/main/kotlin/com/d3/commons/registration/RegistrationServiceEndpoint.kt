@@ -132,22 +132,22 @@ class RegistrationServiceEndpoint(
     ): Any {
         logger.info { "Registration invoked with parameters (name = \"$name\", domain = \"$domain\", pubkey = \"$pubkey\"" }
         return if (isNew) {
-            checkV2(name, domain, pubkey)
-            onPostRegistrationV2(name!!, domain!!, pubkey!!)
+            checkNew(name, domain, pubkey)
+            onPostRegistrationNew(name!!, domain!!, pubkey!!)
         } else {
-            checkV1(name, domain, pubkey)
-            onPostRegistrationV1(name!!, domain!!, pubkey!!)
+            checkOld(name, domain, pubkey)
+            onPostRegistrationOld(name!!, domain!!, pubkey!!)
         }
     }
 
-    private fun checkV1(name: String?, domain: String?, pubkey: String?) {
+    private fun checkOld(name: String?, domain: String?, pubkey: String?) {
         val reason = validateInputs(name, domain, pubkey)
         if (reason.isNotEmpty()) {
             throw OldNotaryException(reason)
         }
     }
 
-    private fun checkV2(name: String?, domain: String?, pubkey: String?) {
+    private fun checkNew(name: String?, domain: String?, pubkey: String?) {
         val reason = validateInputs(name, domain, pubkey)
         if (reason.isNotEmpty()) {
             throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
@@ -162,7 +162,7 @@ class RegistrationServiceEndpoint(
         return reason
     }
 
-    private fun onPostRegistrationV2(
+    private fun onPostRegistrationNew(
         name: String,
         domain: String,
         pubkey: String
@@ -181,7 +181,7 @@ class RegistrationServiceEndpoint(
             })
     }
 
-    private fun onPostRegistrationV1(
+    private fun onPostRegistrationOld(
         name: String,
         domain: String,
         pubkey: String
