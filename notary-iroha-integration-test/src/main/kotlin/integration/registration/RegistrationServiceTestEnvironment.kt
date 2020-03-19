@@ -65,13 +65,24 @@ class RegistrationServiceTestEnvironment(private val integrationHelper: IrohaInt
     val registrationInitialization =
         RegistrationServiceInitialization(registrationConfig, registrationStrategy)
 
-    fun register(
+    fun registerV1(
         name: String,
         pubkey: String = ModelUtil.generateKeypair().public.toHexString(),
         domain: String = D3_DOMAIN
     ): Response {
         return khttp.post(
             "http://127.0.0.1:${registrationConfig.port}$V1/users",
+            data = mapOf("name" to name, "pubkey" to pubkey, "domain" to domain)
+        )
+    }
+
+    fun register(
+        name: String,
+        pubkey: String = ModelUtil.generateKeypair().public.toHexString(),
+        domain: String = D3_DOMAIN
+    ): Response {
+        return khttp.post(
+            "http://127.0.0.1:${registrationConfig.port}/users",
             data = mapOf("name" to name, "pubkey" to pubkey, "domain" to domain)
         )
     }

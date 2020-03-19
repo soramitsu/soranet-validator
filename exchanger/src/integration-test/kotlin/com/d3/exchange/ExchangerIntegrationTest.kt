@@ -69,7 +69,7 @@ class ExchangerIntegrationTest {
             val userName = String.getRandomString(7)
             val userKeypair = Ed25519Sha3().generateKeypair()
             val userPubkey = userKeypair.public.toHexString()
-            val res = registrationServiceEnvironment.register(userName, userPubkey)
+            val res = registrationServiceEnvironment.registerV1(userName, userPubkey)
             assertEquals(200, res.statusCode)
             val userId = "$userName@$D3_DOMAIN"
 
@@ -119,7 +119,7 @@ class ExchangerIntegrationTest {
             val userName = String.getRandomString(7)
             val userKeypair = Ed25519Sha3().generateKeypair()
             val userPubkey = userKeypair.public.toHexString()
-            val res = registrationServiceEnvironment.register(userName, userPubkey)
+            val res = registrationServiceEnvironment.registerV1(userName, userPubkey)
             assertEquals(200, res.statusCode)
             val userId = "$userName@$D3_DOMAIN"
 
@@ -162,7 +162,7 @@ class ExchangerIntegrationTest {
             val userName = String.getRandomString(7)
             val userKeypair = Ed25519Sha3().generateKeypair()
             val userPubkey = userKeypair.public.toHexString()
-            val res = registrationServiceEnvironment.register(userName, userPubkey)
+            val res = registrationServiceEnvironment.registerV1(userName, userPubkey)
             assertEquals(200, res.statusCode)
             val userId = "$userName@$D3_DOMAIN"
             val tooMuchAmount = "1000000"
@@ -219,7 +219,7 @@ class ExchangerIntegrationTest {
             val userName = String.getRandomString(7)
             val userKeypair = Ed25519Sha3().generateKeypair()
             val userPubkey = userKeypair.public.toHexString()
-            val res = registrationServiceEnvironment.register(userName, userPubkey)
+            val res = registrationServiceEnvironment.registerV1(userName, userPubkey)
             assertEquals(200, res.statusCode)
             val userId = "$userName@$D3_DOMAIN"
 
