@@ -44,13 +44,13 @@ class NotificationsIntegrationTest {
         val amount = BigDecimal(100)
 
         // Creating 2 clients
-        var res = environment.registrationEnvironment.register(
+        var res = environment.registrationEnvironment.registerV1(
             environment.srcClientName,
             environment.srcClientKeyPair.public.toHexString()
         )
 
         kotlin.test.assertEquals(200, res.statusCode)
-        res = environment.registrationEnvironment.register(
+        res = environment.registrationEnvironment.registerV1(
             environment.destClientName,
             environment.destClientKeyPair.public.toHexString()
         )

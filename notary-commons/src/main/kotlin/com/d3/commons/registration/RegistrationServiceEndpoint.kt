@@ -16,11 +16,13 @@ import io.ktor.features.CORS
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.gson.gson
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.request.receive
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
+import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -62,20 +64,32 @@ class RegistrationServiceEndpoint(
                     call.respond(NotaryGenericResponse(cause.code, cause.message ?: ""))
                 }
                 exception<OldNotaryException> { cause ->
-                    call.respond(Response(HttpStatusCode.BadRequest, cause.message ?: ""))
+                    call.respondText(
+                        text = cause.message ?: "",
+                        status = HttpStatusCode.BadRequest,
+                        contentType = ContentType.Application.Json
+                    )
                 }
             }
             routing {
                 post("/users") {
                     val parameters = call.receiveParameters()
-                    val response = invokeRegistrationFromParameters(parameters, false)
-                    call.respond(response)
+                    val response = invokeRegistrationFromParameters(parameters, false) as Response
+                    call.respondText(
+                        response.message,
+                        status = response.code,
+                        contentType = ContentType.Application.Json
+                    )
                 }
 
                 post("/users/json") {
                     val body = call.receive(UserDto::class)
-                    val response = invokeRegistrationFromDto(body, false)
-                    call.respond(response)
+                    val response = invokeRegistrationFromDto(body, false) as Response
+                    call.respondText(
+                        response.message,
+                        status = response.code,
+                        contentType = ContentType.Application.Json
+                    )
                 }
 
                 post("$V1/users") {
