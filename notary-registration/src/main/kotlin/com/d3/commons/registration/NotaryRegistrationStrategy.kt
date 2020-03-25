@@ -5,11 +5,15 @@
 
 package com.d3.commons.registration
 
+import com.d3.commons.model.D3ErrorException
+import com.d3.commons.model.NotaryException
+import com.d3.commons.model.NotaryExceptionErrorCode
 import com.d3.commons.notary.IrohaCommand
 import com.d3.commons.notary.IrohaOrderedBatch
 import com.d3.commons.notary.IrohaTransaction
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumer
 import com.d3.commons.sidechain.iroha.consumer.IrohaConverter
+import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.flatMap
@@ -28,6 +32,7 @@ import java.security.KeyPair
 @Component
 class NotaryRegistrationStrategy(
     private val irohaConsumer: IrohaConsumer,
+    private val queryHelper: IrohaQueryHelper,
     @Qualifier("clientStorageAccount") private val clientStorageAccount: String,
     @Qualifier("brvsAccount") private val brvsAccount: String,
     @Qualifier("primaryKeyPair") private val primaryKeyPair: KeyPair,
@@ -46,16 +51,41 @@ class NotaryRegistrationStrategy(
         domainId: String,
         publicKey: String
     ): Result<String, Exception> {
-        logger.info { "notary registration of client $accountName with pubkey $publicKey" }
-        return createRegistrationBatch(accountName, domainId, publicKey)
-            .flatMap { batch ->
-                irohaConsumer.send(batch).map { passedHashes ->
-                    if (passedHashes.size != batch.size) {
-                        throw IllegalStateException("Notary registration failed since tx batch was not fully successful")
-                    }
-                    "$accountName@$domainId"
+        logger.info("notary registration of client $accountName@$domainId with pubkey $publicKey")
+        return queryHelper.isRegistered(accountName, domainId, publicKey).flatMap { registered ->
+            if (registered) {
+                val msg = "client $accountName@$domainId is already registered"
+                throw NotaryException(NotaryExceptionErrorCode.ALREADY_REGISTERED, msg)
+            } else {
+                createRegistrationBatch(accountName, domainId, publicKey).flatMap { batch ->
+                    sendBatch(accountName, domainId, batch)
+                }.flatMap {
+                    createSuccessResult(accountName, domainId)
                 }
             }
+        }
+    }
+
+    /**
+     * Returns successful response
+     */
+    fun createSuccessResult(accountName: String, domainId: String) =
+        Result.of { "$accountName@$domainId" }
+
+    /**
+     * Send list of transactions as batch
+     */
+    fun sendBatch(
+        accountName: String,
+        domainId: String,
+        batch: List<TransactionOuterClass.Transaction>
+    ) = irohaConsumer.send(batch).map { passedHashes ->
+        if (passedHashes.size != batch.size) {
+            throw D3ErrorException.warning(
+                failedOperation = NOTARY_REGISTRATION_OPERATION,
+                description = "Notary registration of account $accountName@$domainId failed since tx batch was not fully successful"
+            )
+        }
     }
 
     /**
@@ -70,6 +100,9 @@ class NotaryRegistrationStrategy(
 
         val transactions = ArrayList<IrohaTransaction>()
 
+        // since domain allows dots and details key doesn't
+        // and vice versa
+        val domainWithReplacedDots = domain.replace('.', '_')
         transactions.add(
             // First step is to create user account but with our own key, not user's one
             IrohaTransaction(
@@ -83,8 +116,8 @@ class NotaryRegistrationStrategy(
                     ),
                     IrohaCommand.CommandSetAccountDetail(
                         clientStorageAccount,
-                        "$name$domain",
-                        domain
+                        "$name$domainWithReplacedDots",
+                        domainWithReplacedDots
                     )
                 )
             )
@@ -162,7 +195,7 @@ class NotaryRegistrationStrategy(
     }
 
     override fun getFreeAddressNumber(): Result<Int, Exception> {
-        return Result.of { throw Exception("not supported") }
+        return Result.of { throw UnsupportedOperationException() }
     }
 
     private fun getSignatoryTx(accountId: String, publicKey: String): IrohaTransaction {

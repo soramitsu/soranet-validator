@@ -1,4 +1,5 @@
 buildscript {
+    ext.ktor_version = '1.0.0'
     repositories {
         mavenCentral()
         jcenter()
@@ -23,7 +24,7 @@ shadowJar.archiveName = 'app.jar'
 
 // sora-plugin configs
 soramitsu {
-    projectGroup = 'd3-deploy'
+    projectGroup = 'soranet'
     docker {
         // docker tag
         tag = System.getenv("TAG")
@@ -34,19 +35,44 @@ soramitsu {
 }
 
 dependencies {
-    compile project(":notary-commons")
+    implementation group: 'com.github.kittinunf.result', name: 'result', version: '1.4.0'
+
+    implementation 'io.github.microutils:kotlin-logging:1.6.26'
+
+    implementation "io.ktor:ktor-gson:$ktor_version"
+
+    implementation 'com.github.hyperledger.iroha-java:client:6.1.0'
+
+    implementation project(":notary-commons")
+
+    implementation project(":notifications-model")
 
     // https://mvnrepository.com/artifact/nl.martijndwars/web-push
-    compile group: 'nl.martijndwars', name: 'web-push', version: '5.0.1'
+    implementation group: 'nl.martijndwars', name: 'web-push', version: '5.0.1'
 
     // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.60'
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.60'
 
     // https://mvnrepository.com/artifact/javax.mail/mail
-    compile group: 'javax.mail', name: 'mail', version: '1.4.7'
+    implementation group: 'javax.mail', name: 'mail', version: '1.4.7'
 
     // https://mvnrepository.com/artifact/org.springframework/spring-context
-    compile group: 'org.springframework', name: 'spring-context', version: '5.1.4.RELEASE'
+    implementation group: 'org.springframework', name: 'spring-context', version: '5.1.4.RELEASE'
+    
+    // Ktor
+    implementation "io.ktor:ktor-server-core:$ktor_version"
+    implementation "io.ktor:ktor-server-netty:$ktor_version"
+
+    // khttp - consume http
+    implementation 'khttp:khttp:0.1.0'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.8.0-beta2'
+
+    compile "com.github.soramitsu.chain-adapter:chain-adapter-client:$chain_adapter_client_version"
+
+    // https://mvnrepository.com/artifact/org.web3j/core
+    compile group: 'org.web3j', name: 'core', version: '4.5.6'
 
 }
 

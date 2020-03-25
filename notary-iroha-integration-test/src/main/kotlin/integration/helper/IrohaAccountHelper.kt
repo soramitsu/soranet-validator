@@ -26,18 +26,12 @@ import java.security.KeyPair
 /**
  * Class that handles all the accounts in running configuration.
  */
-class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int = 1) {
+open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int = 1) {
 
     private val testConfig = loadConfigs("test", TestConfig::class.java, "/test.properties").get()
 
     /** A tester Iroha account with permissions to do everything */
-    val testCredential = IrohaCredential(
-        testConfig.testCredentialConfig.accountId,
-        ModelUtil.loadKeypair(
-            testConfig.testCredentialConfig.pubkeyPath,
-            testConfig.testCredentialConfig.privkeyPath
-        ).get()
-    )
+    val testCredential = IrohaCredential(testConfig.testCredentialConfig)
 
     val irohaConsumer by lazy { IrohaConsumerImpl(testCredential, irohaAPI) }
 
@@ -46,6 +40,13 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     val ethAnchoredTokenStorageAccount by lazy { createTesterAccount("eth_anch_tokens_") }
     val irohaAnchoredTokenStorageAccount by lazy { createTesterAccount("iroha_anch_tokens_") }
+
+    val ethProofStorageAccount by lazy {
+        createTesterAccount(
+            prefix = "eth_proof_storage",
+            domain = "ethWithdrawalProof"
+        )
+    }
 
     /**
      * Makes given account multisignature
@@ -86,7 +87,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     /** Account that used to store registered clients.*/
     val registrationAccount by lazy {
-        createTesterAccount("registration", "registration_service", "client")
+        createTesterAccount("registration", listOf("registration_service"), domain = D3_DOMAIN)
     }
 
     /** Superuser account.*/
@@ -99,7 +100,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     /** Account that used to store registered clients in mst fashion.*/
     val mstRegistrationAccount by lazy {
-        val credential = createTesterAccount("mst_registration", "registration_service", "client")
+        val credential = createTesterAccount("mst_registration", listOf("registration_service", "client"))
         ModelUtil.grantPermissions(
             IrohaConsumerImpl(credential, irohaAPI),
             testCredential.accountId,
@@ -113,7 +114,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     /** Account that used to execute transfer commands */
     val btcWithdrawalAccount by lazy {
-        val credential = createTesterAccount("btc_withdrawal", "withdrawal", "rollback")
+        val credential = createTesterAccount("btc_withdrawal", listOf("withdrawal", "rollback"))
         ModelUtil.grantPermissions(
             IrohaConsumerImpl(credential, irohaAPI),
             testCredential.accountId,
@@ -132,16 +133,34 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     /** Account that collects withdrawal transaction signatures */
     val btcWithdrawalSignatureCollectorAccount by lazy {
-        createTesterAccount("signature_collector", "signature_collector")
+        createTesterAccount("signature_collector", listOf("signature_collector"))
     }
 
     /** Account that collects withdrawal transaction consensus data */
     val btcConsensusAccount by lazy {
-        createTesterAccount("consensus", "consensus_collector")
+        createTesterAccount("consensus", listOf("consensus_collector"))
+    }
+
+    /** Account that registers Ethereum addresses */
+    val ethRegistrationAccount by lazy {
+        createTesterAccount("eth_reg", listOf("registration_service"))
+    }
+
+    val ethWithdrawalAccount by lazy {
+        createTesterAccount("eth_withdrawal", listOf("withdrawal"))
+    }
+
+    val ethWithdrawalProofSetter by lazy {
+        createTesterAccount("eth_proof_setter", listOf("withdrawal"))
+    }
+
+    /** Account that registers Bitcoin addresses */
+    val btcRegistrationAccount by lazy {
+        createTesterAccount("btc_reg", listOf("registration_service"))
     }
 
     /** Account that sets tokens */
-    val tokenSetterAccount by lazy { createTesterAccount("eth_tokens", "eth_token_list_storage") }
+    val tokenSetterAccount by lazy { createTesterAccount("eth_tokens", listOf("eth_token_list_storage")) }
 
     /** Account that used to store peers*/
     val notaryListSetterAccount = notaryAccount
@@ -149,7 +168,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
     val notaryListStorageAccount by lazy {
         createTesterAccount(
             "notary_storage",
-            "notary_list_holder"
+            listOf("notary_list_holder")
         )
     }
 
@@ -161,7 +180,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
 
     /** Account that exchanges tokens */
     val exchangerAccount by lazy {
-        createTesterAccount("exchanger", "exchange")
+        createTesterAccount("exchanger", listOf("exchange"))
     }
 
     fun createCredentialRawConfig(credential: IrohaCredential): IrohaCredentialRawConfig {
@@ -175,9 +194,12 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
     /**
      * Creates randomly named tester account in Iroha
      */
-    fun createTesterAccount(prefix: String, vararg roleName: String): IrohaCredential {
+    fun createTesterAccount(
+        prefix: String,
+        roles: List<String> = emptyList(),
+        domain: String = "notary"
+    ): IrohaCredential {
         val name = prefix + "_${String.getRandomString(9)}"
-        val domain = "notary"
         // TODO - Bulat - generate new keys for account?
         // TODO - Anton - yes
         ModelUtil.createAccount(
@@ -185,7 +207,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
             name,
             domain,
             testCredential.keyPair.public,
-            *roleName
+            roles
         ).fold({
             logger.info("account $name@$domain was created")
             // TODO keypair must be created randomly on every call
@@ -199,7 +221,7 @@ class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers: Int 
      * Create notary account and grant set_my_quorum, transfer_my_assets and add_my_signatory permissions to test account
      */
     private fun createNotaryAccount(): IrohaCredential {
-        val credential = createTesterAccount("notary_${String.getRandomString(9)}", "notary")
+        val credential = createTesterAccount("notary_${String.getRandomString(9)}", listOf("notary"))
 
         ModelUtil.grantPermissions(
             IrohaConsumerImpl(credential, irohaAPI),

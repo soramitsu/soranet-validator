@@ -16,25 +16,10 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
-//Environment variable that holds Ethereum credentials password
-const val ETH_CREDENTIALS_PASSWORD_ENV = "ETH_CREDENTIALS_PASSWORD"
-//Environment variable that holds Ethereum node login
-const val ETH_NODE_LOGIN_ENV = "ETH_NODE_LOGIN"
-//Environment variable that holds Ethereum node password
-const val ETH_NODE_PASSWORD_ENV = "ETH_NODE_PASSWORD"
 //Environment variable that holds current application profile
 const val PROFILE_ENV = "PROFILE"
 
 private val logger = KLogging().logger
-
-/**
- * RMQ configurations
- */
-interface RMQConfig {
-    val host: String
-    val port: Int
-    val irohaExchange: String
-}
 
 /**
  * Iroha configurations
@@ -42,16 +27,6 @@ interface RMQConfig {
 interface IrohaConfig {
     val hostname: String
     val port: Int
-}
-
-//TODO this config must be removed
-/**
- * Configuration for Iroha credential
- */
-interface IrohaCredentialConfig {
-    val accountId: String
-    val pubkeyPath: String
-    val privkeyPath: String
 }
 
 /**
@@ -64,43 +39,6 @@ interface IrohaCredentialRawConfig {
     val pubkey: String
     // Raw private key data in hex format
     val privkey: String
-}
-
-/**
- * Ethereum configurations
- */
-interface EthereumConfig {
-    val url: String
-    val credentialsPath: String
-    val gasPrice: Long
-    val gasLimit: Long
-    val confirmationPeriod: Long
-}
-
-/**
- * Bitcoin configurations
- */
-interface BitcoinConfig {
-    //Path of block storage folder
-    val blockStoragePath: String
-    //Depth of transactions in BTC blockchain
-    val confidenceLevel: Int
-    //BTC node hosts
-    val hosts: String
-
-    companion object {
-        fun extractHosts(bitcoinConfig: BitcoinConfig) =
-            bitcoinConfig.hosts.replace(" ", "").split(",")
-    }
-}
-
-/**
- * Ethereum passwords
- */
-interface EthereumPasswords {
-    val credentialsPassword: String
-    val nodeLogin: String?
-    val nodePassword: String?
 }
 
 /**
@@ -205,23 +143,4 @@ private fun <T : Any> loadStreamConfig(
         logger.warn { "Couldn't open a file $filename. Trying to use only env variables." }
         envProvider.bind(prefix, type)
     }
-}
-
-/**
- * Loads ETH passwords. Lookup priority: environment variables>property file
- * TODO: implement command line argument parsing
- */
-fun loadEthPasswords(
-    prefix: String,
-    filename: String
-): Result<EthereumPasswords, Exception> {
-    var config = loadConfigs(prefix, EthereumPasswords::class.java, filename).get()
-    config = object : EthereumPasswords {
-        override val credentialsPassword =
-            System.getenv(ETH_CREDENTIALS_PASSWORD_ENV) ?: config.credentialsPassword
-        override val nodeLogin = System.getenv(ETH_NODE_LOGIN_ENV) ?: config.nodeLogin
-        override val nodePassword = System.getenv(ETH_NODE_PASSWORD_ENV) ?: config.nodePassword
-    }
-
-    return Result.of(config)
 }
