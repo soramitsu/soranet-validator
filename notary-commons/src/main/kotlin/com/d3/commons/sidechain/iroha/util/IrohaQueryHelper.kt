@@ -13,6 +13,11 @@ import java.util.*
 interface IrohaQueryHelper {
 
     /**
+     * Returns account id of a query creator
+     */
+    fun getQueryCreatorAccountId(): String
+
+    /**
      * Retrieves account from Iroha
      * @param accountId - account to retrieve
      * @throws Exception if response contains error
@@ -39,6 +44,68 @@ interface IrohaQueryHelper {
         writerAccountId: String
     ): Result<Map<String, String>, Exception>
 
+    /**
+     * Retrieves account details by storage account id and key from Iroha
+     * @param storageAccountId - account to read details from
+     * @param key - key of detail
+     * @return map with account details in form (setter->detail value)
+     */
+    fun getAccountDetailsByKeyOnly(
+        storageAccountId: String,
+        key: String
+    ): Result<Map<String, String>, Exception>
+
+    /**
+     * Retrieves the first account detail by setter and predicate from Iroha
+     * @param storageAccountId - account to read details from
+     * @param writerAccountId - account that has set the details
+     * @param firstPredicate - predicate
+     * @return the first account detail by setter and [firstPredicate] or null
+     */
+    fun getAccountDetailsFirst(
+        storageAccountId: String,
+        writerAccountId: String,
+        firstPredicate: (key: String, value: String) -> Boolean
+    ): Result<Optional<Map.Entry<String, String>>, Exception>
+
+    /**
+     * Does the same exact thing as [getAccountDetailsFirst] but randomly shuffles every page before applying any predicate
+     * @param storageAccountId - account to read details from
+     * @param writerAccountId - account that has set the details
+     * @param firstPredicate - predicate
+     * @return the first account detail by setter and [firstPredicate] or null
+     */
+    fun getAccountDetailsFirstShufflePage(
+        storageAccountId: String,
+        writerAccountId: String,
+        firstPredicate: (key: String, value: String) -> Boolean
+    ): Result<Optional<Map.Entry<String, String>>, Exception>
+
+    /**
+     * Retrieves account details by setter filtered by predicate from Iroha
+     * @param storageAccountId - account to read details from
+     * @param writerAccountId - account that has set the details
+     * @param filterPredicate - predicate
+     * @return account details by setter filtered by [filterPredicate] from Iroha
+     */
+    fun getAccountDetailsFilter(
+        storageAccountId: String,
+        writerAccountId: String,
+        filterPredicate: (key: String, value: String) -> Boolean
+    ): Result<Map<String, String>, Exception>
+
+    /**
+     * Retrieves the number of account details by setter filtered by predicate from Iroha
+     * @param storageAccountId - account to read details from
+     * @param writerAccountId - account that has set the details
+     * @param countPredicate - predicate
+     * @return the number of account details by setter filtered by [countPredicate] from Iroha
+     */
+    fun getAccountDetailsCount(
+        storageAccountId: String,
+        writerAccountId: String,
+        countPredicate: (key: String, value: String) -> Boolean
+    ): Result<Int, Exception>
 
     /**
      * Retrieves account detail by setter and key from Iroha
@@ -52,7 +119,6 @@ interface IrohaQueryHelper {
         writerAccountId: String,
         key: String
     ): Result<Optional<String>, Exception>
-
 
     /**
      * Get asset precision
@@ -104,4 +170,19 @@ interface IrohaQueryHelper {
      * @return first transaction
      */
     fun getSingleTransaction(hash: String): Result<TransactionOuterClass.Transaction, Exception>
+
+    /**
+     * Return number of peers
+     * @return number of peers
+     */
+    fun getPeersCount(): Result<Int, Exception>
+
+    /**
+     * Check if account is registered and has @publicKey
+     */
+    fun isRegistered(
+        accountName: String,
+        domainId: String,
+        publicKey: String
+    ): Result<Boolean, Exception>
 }

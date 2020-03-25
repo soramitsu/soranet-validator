@@ -5,17 +5,18 @@
 
 package integration.helper
 
-import com.d3.commons.config.RMQConfig
+import com.d3.chainadapter.client.RMQConfig
+import com.d3.chainadapter.client.ReliableIrohaChainListener
 import com.d3.commons.config.loadConfigs
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
-import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumer
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumerImpl
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.getRandomString
 import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.map
 import integration.TestConfig
 import jp.co.soramitsu.iroha.java.IrohaAPI
@@ -25,6 +26,8 @@ import mu.KLogging
 import java.io.Closeable
 import java.math.BigDecimal
 import java.security.KeyPair
+
+const val D3_DOMAIN = "d3"
 
 /**
  * Utility class that makes testing more comfortable
@@ -43,13 +46,7 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
         loadRawLocalConfigs("rmq", RMQConfig::class.java, "rmq.properties")
     val testQueue = String.getRandomString(20)
 
-    val testCredential = IrohaCredential(
-        testConfig.testCredentialConfig.accountId,
-        ModelUtil.loadKeypair(
-            testConfig.testCredentialConfig.pubkeyPath,
-            testConfig.testCredentialConfig.privkeyPath
-        ).get()
-    )
+    val testCredential = IrohaCredential(testConfig.testCredentialConfig)
 
     open val accountHelper by lazy { IrohaAccountHelper(irohaAPI, peers) }
 
@@ -147,7 +144,7 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
      * @param amount - amount to add
      */
     fun addIrohaAssetTo(accountId: String, assetId: String, amount: String) {
-        ModelUtil.addAssetIroha(irohaConsumer, assetId, amount)
+        ModelUtil.addAssetIroha(irohaConsumer, assetId, amount).failure { ex -> throw ex }
         if (irohaConsumer.creator != accountId)
             ModelUtil.transferAssetIroha(
                 irohaConsumer,
@@ -274,6 +271,46 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
     }
 
     /**
+     * Send transfer asset command in Iroha with fee
+     * @param creator - iroha transaction creator
+     * @param kp - keypair
+     * @param srcAccountId - source account id
+     * @param destAccountId - destination account id
+     * @param assetId - asset id
+     * @param description - transaction description
+     * @param amount - amount
+     * @param feeAssetId - fee asset id
+     * @param feeAmount - amount of fee
+     * @param createdTime - time tx creation. Current by default.
+     * @return hex representation of transaction hash
+     */
+    fun transferAssetIrohaFromClientWithFee(
+        creator: String,
+        kp: KeyPair,
+        srcAccountId: String,
+        destAccountId: String,
+        assetId: String,
+        description: String,
+        amount: String,
+        feeAssetId: String,
+        feeAmount: String,
+        feeDescription: String = "transfer fee",
+        createdTime: Long = System.currentTimeMillis(),
+        // first is for user, second is for brvs instance
+        quorum: Int = 2
+    ): String {
+        logger.info { "Iroha transfer of $amount $assetId from $srcAccountId to $destAccountId. Fee $feeAmount" }
+        val tx = Transaction.builder(creator)
+            .transferAsset(srcAccountId, destAccountId, assetId, description, amount)
+            .transferAsset(srcAccountId, destAccountId, feeAssetId, feeDescription, feeAmount)
+            .setCreatedTime(createdTime)
+            .setQuorum(quorum)
+            .sign(kp)
+            .build()
+        return irohaConsumer.send(tx).get()
+    }
+
+    /**
      * Query Iroha account balance from [accountId].
      * @return Map(assetId to balance)
      */
@@ -299,6 +336,32 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
         value: String,
         createdTime: Long = System.currentTimeMillis()
     ): Result<String, Exception> {
+        return setAccountDetail(
+            irohaConsumer,
+            accountId,
+            key,
+            value,
+            createdTime,
+            2
+        )
+    }
+
+    /**
+     * Send SetAccountDetail to Iroha
+     * @param irohaConsumer - iroha network layer
+     * @param accountId - account to set details
+     * @param key - key of detail
+     * @param value - value of detail
+     * @return hex representation of transaction hash
+     */
+    fun setAccountDetail(
+        irohaConsumer: IrohaConsumer,
+        accountId: String,
+        key: String,
+        value: String,
+        createdTime: Long = System.currentTimeMillis(),
+        quorum: Int = 1
+    ): Result<String, Exception> {
         return ModelUtil.setAccountDetail(
             irohaConsumer,
             accountId,
@@ -306,7 +369,7 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
             value,
             createdTime,
             // first is for user, second is for brvs instance
-            2
+            quorum
         )
     }
 

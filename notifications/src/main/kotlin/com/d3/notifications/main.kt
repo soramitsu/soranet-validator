@@ -10,10 +10,11 @@ package com.d3.notifications
 import com.d3.notifications.init.NotificationInitialization
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
-import com.github.kittinunf.result.map
+import com.github.kittinunf.result.flatMap
 import mu.KLogging
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.ComponentScan
+import kotlin.system.exitProcess
 
 const val NOTIFICATIONS_SERVICE_NAME = "notifications"
 
@@ -25,13 +26,17 @@ private val logger = KLogging().logger
 /*
   Notification service entry point
  */
-fun main(args: Array<String>) {
+fun main() {
     Result.of {
-        AnnotationConfigApplicationContext(NotificationApplication::class.java)
-    }.map { context ->
-        context.getBean(NotificationInitialization::class.java).init { System.exit(1) }
+        val context = AnnotationConfigApplicationContext()
+        context.register(NotificationApplication::class.java)
+        context.refresh()
+        context
+    }.flatMap { context ->
+        context.getBean(NotificationInitialization::class.java).init { exitProcess(1) }
     }.failure { ex ->
         logger.error("Cannot start notification service", ex)
-        System.exit(1)
+        exitProcess(1)
     }
 }
+
