@@ -6,6 +6,8 @@
 package com.d3.commons.registration
 
 import com.d3.commons.model.D3ErrorException
+import com.d3.commons.model.NotaryException
+import com.d3.commons.model.NotaryExceptionErrorCode
 import com.d3.commons.notary.IrohaCommand
 import com.d3.commons.notary.IrohaOrderedBatch
 import com.d3.commons.notary.IrohaTransaction
@@ -18,7 +20,6 @@ import com.github.kittinunf.result.flatMap
 import com.github.kittinunf.result.map
 import iroha.protocol.Primitive
 import iroha.protocol.TransactionOuterClass
-import jp.co.soramitsu.iroha.java.ErrorResponseException
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Qualifier
@@ -53,8 +54,8 @@ class NotaryRegistrationStrategy(
         logger.info("notary registration of client $accountName@$domainId with pubkey $publicKey")
         return queryHelper.isRegistered(accountName, domainId, publicKey).flatMap { registered ->
             if (registered) {
-                logger.info { "client $accountName@$domainId is already registered" }
-                createSuccessResult(accountName, domainId)
+                val msg = "client $accountName@$domainId is already registered"
+                throw NotaryException(NotaryExceptionErrorCode.ALREADY_REGISTERED, msg)
             } else {
                 createRegistrationBatch(accountName, domainId, publicKey).flatMap { batch ->
                     sendBatch(accountName, domainId, batch)

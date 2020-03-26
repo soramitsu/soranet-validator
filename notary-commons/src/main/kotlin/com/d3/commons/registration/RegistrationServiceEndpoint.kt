@@ -5,14 +5,20 @@
 
 package com.d3.commons.registration
 
-import com.squareup.moshi.Moshi
+import com.d3.commons.model.NotaryException
+import com.d3.commons.model.NotaryExceptionErrorCode
+import com.d3.commons.model.NotaryGenericResponse
+import com.d3.commons.model.OldNotaryException
+import com.d3.commons.util.GsonInstance
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CORS
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.StatusPages
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.request.receive
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
@@ -25,6 +31,7 @@ import io.ktor.server.netty.Netty
 import mu.KLogging
 
 data class Response(val code: HttpStatusCode, val message: String)
+data class MappingRegistrationResponse(val responseMap: Map<*, *>) : NotaryGenericResponse()
 
 /**
  * Registration HTTP service
@@ -40,10 +47,6 @@ class RegistrationServiceEndpoint(
         null
     )
 
-    // Moshi adapter for response serialization
-    val moshiAdapter = Moshi.Builder().build()!!.adapter(Map::class.java)!!
-
-
     init {
         logger.info { "Start registration server on port $port" }
 
@@ -56,14 +59,22 @@ class RegistrationServiceEndpoint(
             install(ContentNegotiation) {
                 gson()
             }
+            install(StatusPages) {
+                exception<NotaryException> { cause ->
+                    call.respond(NotaryGenericResponse(cause.code, cause.message ?: ""))
+                }
+                exception<OldNotaryException> { cause ->
+                    call.respondText(
+                        text = cause.message ?: "",
+                        status = HttpStatusCode.BadRequest,
+                        contentType = ContentType.Application.Json
+                    )
+                }
+            }
             routing {
                 post("/users") {
                     val parameters = call.receiveParameters()
-                    val name = parameters["name"]
-                    val pubkey = parameters["pubkey"]
-                    val domain = determineDomain(domain, parameters["domain"])
-
-                    val response = invokeRegistration(name, domain, pubkey)
+                    val response = invokeRegistrationFromParameters(parameters, false) as Response
                     call.respondText(
                         response.message,
                         status = response.code,
@@ -73,11 +84,7 @@ class RegistrationServiceEndpoint(
 
                 post("/users/json") {
                     val body = call.receive(UserDto::class)
-                    val name = body.name
-                    val pubkey = body.pubkey
-                    val domain = determineDomain(domain, body.domain)
-
-                    val response = invokeRegistration(name, domain, pubkey)
+                    val response = invokeRegistrationFromDto(body, false) as Response
                     call.respondText(
                         response.message,
                         status = response.code,
@@ -85,9 +92,16 @@ class RegistrationServiceEndpoint(
                     )
                 }
 
-                get("free-addresses/number") {
-                    val response = onGetFreeAddressesNumber()
-                    call.respondText(response.message, status = response.code)
+                post("$V1/users") {
+                    val parameters = call.receiveParameters()
+                    val response = invokeRegistrationFromParameters(parameters, true)
+                    call.respond(response)
+                }
+
+                post("$V1/users/json") {
+                    val body = call.receive(UserDto::class)
+                    val response = invokeRegistrationFromDto(body, true)
+                    call.respond(response)
                 }
 
                 get("/actuator/health") {
@@ -102,6 +116,20 @@ class RegistrationServiceEndpoint(
         server.start(wait = false)
     }
 
+    private fun invokeRegistrationFromParameters(parameters: Parameters, isNew: Boolean): Any {
+        val name = parameters["name"]
+        val pubkey = parameters["pubkey"]
+        val domain = determineDomain(domain, parameters["domain"])
+        return invokeRegistration(name, domain, pubkey, isNew)
+    }
+
+    private fun invokeRegistrationFromDto(dto: UserDto, isNew: Boolean): Any {
+        val name = dto.name
+        val pubkey = dto.pubkey
+        val domain = determineDomain(domain, dto.domain)
+        return invokeRegistration(name, domain, pubkey, isNew)
+    }
+
     private fun determineDomain(vararg candidates: String?) =
         try {
             candidates.first { domainCandidate -> !domainCandidate.isNullOrBlank() }!!
@@ -113,67 +141,67 @@ class RegistrationServiceEndpoint(
     private fun invokeRegistration(
         name: String?,
         domain: String?,
-        pubkey: String?
-    ): Response {
+        pubkey: String?,
+        isNew: Boolean
+    ): Any {
         logger.info { "Registration invoked with parameters (name = \"$name\", domain = \"$domain\", pubkey = \"$pubkey\"" }
-        return onPostRegistration(name, domain, pubkey)
+        check(name, domain, pubkey, isNew)
+        return onPostRegistration(name!!, domain!!, pubkey!!, isNew)
     }
 
-    private fun responseError(code: HttpStatusCode, reason: String): Response {
-        logger.error { "Response has been failed with code $code. $reason" }
-        return Response(code, reason)
+    private fun check(name: String?, domain: String?, pubkey: String?, isNew: Boolean) {
+        val reason = validateInputs(name, domain, pubkey)
+        if (reason.isNotEmpty()) {
+            if (isNew) {
+                throw NotaryException(NotaryExceptionErrorCode.WRONG_INPUT, reason)
+            } else {
+                throw OldNotaryException(reason)
+            }
+        }
     }
 
-    private fun onPostRegistration(
-        name: String?,
-        domain: String?,
-        pubkey: String?
-    ): Response {
+    private fun validateInputs(name: String?, domain: String?, pubkey: String?): String {
         var reason = ""
         if (name.isNullOrEmpty()) reason = reason.plus("Parameter \"name\" is not specified. ")
         if (domain.isNullOrEmpty()) reason = reason.plus("Parameter \"domain\" is not specified. ")
-        if (pubkey == null) reason = reason.plus("Parameter \"pubkey\" is not specified.")
+        if (pubkey == null || pubkey.length != 64) reason = reason.plus("Parameter \"pubkey\" is invalid.")
+        return reason
+    }
 
-        if (name.isNullOrEmpty() || domain.isNullOrEmpty() || pubkey == null) {
-            return responseError(HttpStatusCode.BadRequest, reason)
-        }
+    private fun onPostRegistration(
+        name: String,
+        domain: String,
+        pubkey: String,
+        isNew: Boolean
+    ): Any {
         registrationStrategy.register(name, domain, pubkey).fold(
             { address ->
                 logger.info {
                     "Client $name@$domain was successfully registered with address $address"
                 }
-
-                val response = mapOf("clientId" to address)
-                val serialized = moshiAdapter.toJson(response)
-
-                return Response(HttpStatusCode.OK, serialized)
+                val response = mapOf(CLIENT_ID to address)
+                return if (isNew) MappingRegistrationResponse(response)
+                else Response(HttpStatusCode.OK, GsonInstance.get().toJson(response))
             },
             { ex ->
                 logger.error("Cannot register client $name", ex)
-
-                val response = mapOf("message" to ex.message, "details" to ex.toString())
-                val serialized = moshiAdapter.toJson(response)
-
-                return responseError(HttpStatusCode.InternalServerError, serialized)
-            })
-    }
-
-    private fun onGetFreeAddressesNumber(): Response {
-        return registrationStrategy.getFreeAddressNumber()
-            .fold(
-                {
-                    Response(HttpStatusCode.OK, it.toString())
-                },
-                {
-                    responseError(HttpStatusCode.InternalServerError, it.toString())
+                if (!isNew && ex is NotaryException) {
+                    return Response(
+                        HttpStatusCode.OK,
+                        GsonInstance.get().toJson(mapOf(CLIENT_ID to "$name@$domain"))
+                    )
                 }
-            )
+                throw ex
+            })
     }
 
     /**
      * Logger
      */
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val CLIENT_ID = "clientId"
+        const val V1 = "/v1"
+    }
 }
 
 data class UserDto(

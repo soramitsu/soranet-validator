@@ -8,6 +8,7 @@ package integration.registration
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.provider.NotaryClientsProvider
 import com.d3.commons.registration.NotaryRegistrationStrategy
+import com.d3.commons.registration.RegistrationServiceEndpoint.Companion.V1
 import com.d3.commons.registration.RegistrationServiceInitialization
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumerImpl
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
@@ -63,6 +64,17 @@ class RegistrationServiceTestEnvironment(private val integrationHelper: IrohaInt
 
     val registrationInitialization =
         RegistrationServiceInitialization(registrationConfig, registrationStrategy)
+
+    fun registerV1(
+        name: String,
+        pubkey: String = ModelUtil.generateKeypair().public.toHexString(),
+        domain: String = D3_DOMAIN
+    ): Response {
+        return khttp.post(
+            "http://127.0.0.1:${registrationConfig.port}$V1/users",
+            data = mapOf("name" to name, "pubkey" to pubkey, "domain" to domain)
+        )
+    }
 
     fun register(
         name: String,
