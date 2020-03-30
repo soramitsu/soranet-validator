@@ -83,7 +83,6 @@ pipeline {
           sh "tar -zcvf build-logs/dokka.gz -C build/reports dokka || true"
           archiveArtifacts artifacts: 'build-logs/*.gz'
           sh "docker-compose -f deploy/docker-compose.yml -f deploy/docker-compose.ci.yml down"
-          cleanWs()
         }
       }
     }
@@ -108,6 +107,11 @@ pipeline {
               }
         }
       }
+    }
+  }
+  post {
+    cleanup {
+      cleanWs()
     }
   }
 }
