@@ -18,7 +18,6 @@ import com.github.kittinunf.result.failure
 import com.rabbitmq.client.*
 import com.rabbitmq.client.impl.DefaultExceptionHandler
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -106,13 +105,19 @@ class EventsQueue(
                     }
                     // Handle client 'send'
                     Client2ClientSendTransferEvent::class.java.canonicalName -> {
-                        val transferNotifyEvent = gson.fromJson(json, Client2ClientSendTransferEvent::class.java)
+                        val transferNotifyEvent = gson.fromJson(
+                            json,
+                            Client2ClientSendTransferEvent::class.java
+                        )
                         logger.info("Got transfer 'send' event: $transferNotifyEvent")
                         handleSendTransfer(transferNotifyEvent, serviceId)
                     }
                     // Handle client 'receive'
                     Client2ClientReceiveTransferEvent::class.java.canonicalName -> {
-                        val transferNotifyEvent = gson.fromJson(json, Client2ClientReceiveTransferEvent::class.java)
+                        val transferNotifyEvent = gson.fromJson(
+                            json,
+                            Client2ClientReceiveTransferEvent::class.java
+                        )
                         logger.info("Got transfer 'receive' event: $transferNotifyEvent")
                         handleReceiveTransfer(transferNotifyEvent, serviceId)
                     }
@@ -124,17 +129,30 @@ class EventsQueue(
                     }
                     // Handle failed registrations
                     FailedRegistrationNotifyEvent::class.java.canonicalName -> {
-                        val failedRegistrationNotifyEvent =
-                            gson.fromJson(json, FailedRegistrationNotifyEvent::class.java)
+                        val failedRegistrationNotifyEvent = gson.fromJson(
+                            json,
+                            FailedRegistrationNotifyEvent::class.java
+                        )
                         logger.info("Got failed registration event: $failedRegistrationNotifyEvent")
                         handleFailedRegistration(failedRegistrationNotifyEvent, serviceId)
                     }
                     // Handle 'got enough proofs' in Ethereum
                     EthWithdrawalProofsEvent::class.java.canonicalName -> {
-                        val ethWithdrawalProofsEvent =
-                            gson.fromJson(json, EthWithdrawalProofsEvent::class.java)
+                        val ethWithdrawalProofsEvent = gson.fromJson(
+                            json,
+                            EthWithdrawalProofsEvent::class.java
+                        )
                         logger.info("Got 'enough proofs' event: $ethWithdrawalProofsEvent")
                         handleEthWithdrawalProofs(ethWithdrawalProofsEvent, serviceId)
+                    }
+                    // Handle 'withdrawal commit' in Ethereum
+                    AckEthWithdrawalProofEvent::class.java.canonicalName -> {
+                        val ackEthWithdrawalProofEvent = gson.fromJson(
+                            json,
+                            AckEthWithdrawalProofEvent::class.java
+                        )
+                        logger.info("Got 'withdrawal commit' event: $ackEthWithdrawalProofEvent")
+                        handleEthWithdrawalCommit(ackEthWithdrawalProofEvent, serviceId)
                     }
                     else -> logger.warn("Cannot handle event type $eventType. Message is $json")
                 }
@@ -218,7 +236,10 @@ class EventsQueue(
         val json = String(delivery.body)
         if (error is RepeatableException) {
             // Re-queue if possible
-            logger.warn("Cannot handle event due to error. Try to re-queue. Json $json. Service id $serviceId", error)
+            logger.warn(
+                "Cannot handle event due to error. Try to re-queue. Json $json. Service id $serviceId",
+                error
+            )
             nack(delivery)
         } else {
             ack(delivery)
@@ -257,10 +278,29 @@ class EventsQueue(
      * @param ethWithdrawalProofsEvent - event ot handle
      * @param serviceId - id of the service that must handle the event
      */
-    private fun handleEthWithdrawalProofs(ethWithdrawalProofsEvent: EthWithdrawalProofsEvent, serviceId: String) {
+    private fun handleEthWithdrawalProofs(
+        ethWithdrawalProofsEvent: EthWithdrawalProofsEvent,
+        serviceId: String
+    ) {
         notificationServices.filter { it.serviceId() == serviceId }.take(1).forEach {
             if (it is EthSpecificNotificationService) {
                 it.notifyEthWithdrawalProofs(ethWithdrawalProofsEvent).failure { ex -> throw ex }
+            }
+        }
+    }
+
+    /**
+     * Handles 'got withdrawal commit' in the Ethereum subsystem
+     * @param ackEthWithdrawalProofEvent - event ot handle
+     * @param serviceId - id of the service that must handle the event
+     */
+    private fun handleEthWithdrawalCommit(
+        ackEthWithdrawalProofEvent: AckEthWithdrawalProofEvent,
+        serviceId: String
+    ) {
+        notificationServices.filter { it.serviceId() == serviceId }.take(1).forEach {
+            if (it is EthSpecificNotificationService) {
+                it.notifyEthWithdrawalCommit(ackEthWithdrawalProofEvent).failure { ex -> throw ex }
             }
         }
     }
@@ -292,7 +332,10 @@ class EventsQueue(
      * @param transferNotifyEvent - 'receive' event to handle
      * @param serviceId - id of the service that must handle the event
      */
-    private fun handleReceiveTransfer(transferNotifyEvent: Client2ClientReceiveTransferEvent, serviceId: String) {
+    private fun handleReceiveTransfer(
+        transferNotifyEvent: Client2ClientReceiveTransferEvent,
+        serviceId: String
+    ) {
         iterateThroughNotificationServices(serviceId) {
             it.notifyReceiveFromClient(transferNotifyEvent)
         }

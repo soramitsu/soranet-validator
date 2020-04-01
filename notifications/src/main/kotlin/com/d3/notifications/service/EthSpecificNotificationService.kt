@@ -5,6 +5,7 @@
 
 package com.d3.notifications.service
 
+import com.d3.notifications.event.AckEthWithdrawalProofEvent
 import com.d3.notifications.event.EthWithdrawalProofsEvent
 import com.github.kittinunf.result.Result
 
@@ -19,4 +20,11 @@ interface EthSpecificNotificationService {
      * @return result of operation
      */
     fun notifyEthWithdrawalProofs(ethWithdrawalProofsEvent: EthWithdrawalProofsEvent): Result<Unit, Exception>
+
+    /**
+     * Notifies about successful withdrawal commit in the Ethereum subsystem
+     * @param ackEthWithdrawalProofEvent - event to notify about
+     * @return result of operation
+     */
+    fun notifyEthWithdrawalCommit(ackEthWithdrawalProofEvent: AckEthWithdrawalProofEvent): Result<Unit, Exception>
 }

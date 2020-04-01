@@ -155,7 +155,7 @@ data class SoraECDSASignature(
 }
 
 class SoraAckEthWithdrawalProofEvent(
-    val proofEventId: String,
+    val irohaTxHash: String,
     id: String,
     txTime: Long,
     blockNum: Long,
@@ -164,7 +164,7 @@ class SoraAckEthWithdrawalProofEvent(
     companion object {
         fun map(ackEthWithdrawalProofEvent: AckEthWithdrawalProofEvent): SoraAckEthWithdrawalProofEvent {
             return SoraAckEthWithdrawalProofEvent(
-                proofEventId = ackEthWithdrawalProofEvent.proofEventId,
+                irohaTxHash = ackEthWithdrawalProofEvent.irohaTxHash,
                 id = ackEthWithdrawalProofEvent.id,
                 txTime = ackEthWithdrawalProofEvent.txTime,
                 blockNum = ackEthWithdrawalProofEvent.blockNum,

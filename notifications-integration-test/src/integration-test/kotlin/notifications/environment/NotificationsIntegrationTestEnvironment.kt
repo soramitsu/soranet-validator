@@ -124,7 +124,7 @@ class NotificationsIntegrationTestEnvironment(private val integrationHelper: Iro
 
     private val soraNotificationService = SoraNotificationService(notificationsConfig.rmq)
 
-    private val eventsQueue =
+    val eventsQueue =
         EventsQueue(
             listOf(soraNotificationService),
             notificationsConfig.rmq

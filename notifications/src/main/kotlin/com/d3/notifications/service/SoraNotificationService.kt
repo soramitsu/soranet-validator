@@ -64,6 +64,13 @@ class SoraNotificationService(rmqConfig: RMQConfig) : NotificationService, EthSp
         }
     }
 
+    override fun notifyEthWithdrawalCommit(ackEthWithdrawalProofEvent: AckEthWithdrawalProofEvent): Result<Unit, Exception> {
+        logger.info("Notify Ethereum withdrawal commit $ackEthWithdrawalProofEvent")
+        return Result.of {
+            postSoraEvent(SoraAckEthWithdrawalProofEvent.map(ackEthWithdrawalProofEvent))
+        }
+    }
+
     override fun notifyFailedRegistration(failedRegistrationNotifyEvent: FailedRegistrationNotifyEvent): Result<Unit, Exception> {
         if (failedRegistrationNotifyEvent.subsystem != RegistrationEventSubsystem.ETH) {
             return Result.of { logger.warn("Sora notification service is not interested in ${failedRegistrationNotifyEvent.subsystem.name} registrations") }
