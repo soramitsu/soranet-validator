@@ -87,7 +87,10 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
 
     /** Account that used to store registered clients.*/
     open val registrationAccount by lazy {
-        createTesterAccount("registration", listOf("registration_service"), domain = D3_DOMAIN)
+        IrohaCredential(
+            "registration_service@d3",
+            testCredential.keyPair
+        )
     }
 
     /** Superuser account.*/
