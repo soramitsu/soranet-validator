@@ -205,7 +205,10 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
         domain: String = "notary",
         randomize: Boolean = true
     ): IrohaCredential {
-        val name = prefix + if (randomize) "_${String.getRandomString(9)}" else ""
+        var name = prefix
+        if (randomize) {
+            name += "_${String.getRandomString(9)}"
+        }
         // TODO - Bulat - generate new keys for account?
         // TODO - Anton - yes
         ModelUtil.createAccount(
