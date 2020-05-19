@@ -160,7 +160,12 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
     }
 
     /** Account that sets tokens */
-    open val tokenSetterAccount by lazy { createTesterAccount("eth_tokens", listOf("eth_token_list_storage")) }
+    open val tokenSetterAccount by lazy {
+        createTesterAccount(
+            "eth_tokens",
+            listOf("eth_token_list_storage")
+        )
+    }
 
     /** Account that used to store peers*/
     open val notaryListSetterAccount = notaryAccount
@@ -197,9 +202,10 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
     fun createTesterAccount(
         prefix: String,
         roles: List<String> = emptyList(),
-        domain: String = "notary"
+        domain: String = "notary",
+        randomize: Boolean = true
     ): IrohaCredential {
-        val name = prefix + "_${String.getRandomString(9)}"
+        val name = prefix + if (randomize) "_${String.getRandomString(9)}" else ""
         // TODO - Bulat - generate new keys for account?
         // TODO - Anton - yes
         ModelUtil.createAccount(
