@@ -168,7 +168,7 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
     }
 
     /** Account that used to store peers*/
-    open val notaryListSetterAccount = notaryAccount
+    open val notaryListSetterAccount by lazy { notaryAccount }
 
     open val notaryListStorageAccount by lazy {
         createTesterAccount(
