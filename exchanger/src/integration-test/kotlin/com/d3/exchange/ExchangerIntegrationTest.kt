@@ -26,6 +26,8 @@ import kotlin.test.assertTrue
 private const val TRANSFER_WAIT_TIME = 10_000L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// TODO XNET-100
+@Disabled
 class ExchangerIntegrationTest {
 
     private val gson = GsonInstance.get()
