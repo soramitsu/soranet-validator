@@ -5,7 +5,7 @@ services:
 
   # D3 common registration service
   d3-registration:
-    image: nexus.iroha.tech:19004/soranet/notary-registration:${TAG-master}
+    image: docker.soramitsu.co.jp/soranet/notary-registration:${TAG-master}
     container_name: d3-registration
     restart: on-failure
     ports:
@@ -17,7 +17,7 @@ services:
       - d3-network
 
   d3-exchanger:
-    image: nexus.iroha.tech:19004/soranet/exchanger:${TAG-master}
+    image: docker.soramitsu.co.jp/soranet/exchanger:${TAG-master}
     container_name: d3-exchanger
     restart: on-failure
     environment:
@@ -26,7 +26,7 @@ services:
       - d3-network
 
   d3-changelog:
-    image: nexus.iroha.tech:19004/soranet/changelog-endpoint:master
+    image: docker.soramitsu.co.jp/soranet/changelog-endpoint:master
     container_name: d3-changelog
     restart: on-failure
     ports:
@@ -35,7 +35,7 @@ services:
       - d3-network
 
   d3-notifications:
-    image: nexus.iroha.tech:19004/soranet/notifications:${TAG-master}
+    image: docker.soramitsu.co.jp/soranet/notifications:${TAG-master}
     container_name: d3-notifications
     restart: on-failure
     networks:
