@@ -23,9 +23,6 @@ pipeline {
           withCredentials([usernamePassword(credentialsId: 'bot-soranet-ro', usernameVariable: 'login', passwordVariable: 'password')]) {
             sh "docker login docker.soramitsu.co.jp -u ${login} -p '${password}'"
           }
-          withCredentials([usernamePassword(credentialsId: 'bot-soramitsu-ro', usernameVariable: 'login', passwordVariable: 'password')]) {
-            sh "docker login docker.soramitsu.co.jp -u ${login} -p '${password}'"
-          }
           withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
             sh "docker login nexus.iroha.tech:19002 -u ${login} -p '${password}'"
           }
