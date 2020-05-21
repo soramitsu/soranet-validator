@@ -20,7 +20,7 @@ pipeline {
 
           DOCKER_NETWORK = "${env.CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
           writeFile file: ".env", text: "SUBNET=${DOCKER_NETWORK}"
-          withCredentials([usernamePassword(credentialsId: 'bot-soramitsu-ro', usernameVariable: 'login', passwordVariable: 'password')]) {
+          withCredentials([usernamePassword(credentialsId: 'bot-soranet-ro', usernameVariable: 'login', passwordVariable: 'password')]) {
             sh "docker login docker.soramitsu.co.jp -u ${login} -p '${password}'"
           }
           withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
@@ -91,7 +91,7 @@ pipeline {
       steps {
         script {
           if (env.BRANCH_NAME ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
-                withCredentials([usernamePassword(credentialsId: 'bot-soramitsu-rw', usernameVariable: 'login', passwordVariable: 'password')]) {
+                withCredentials([usernamePassword(credentialsId: 'bot-soranet-rw', usernameVariable: 'login', passwordVariable: 'password')]) {
                   TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
                   iC = docker.image("gradle:4.10.2-jdk8-slim")
                   iC.inside(" -e JVM_OPTS='-Xmx3200m' -e TERM='dumb'"+
