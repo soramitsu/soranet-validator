@@ -50,7 +50,7 @@ services:
       - d3-network
 
   d3-chain-adapter:
-    image: docker.soramitsu.co.jp/soramitsu/chain-adapter:master
+    image: docker.soramitsu.co.jp/soramitsu/chain-adapter:develop
     container_name: d3-chain-adapter
     restart: on-failure
     ports:
@@ -86,7 +86,7 @@ services:
       - d3-network
 
   d3-brvs:
-    image: docker.soramitsu.co.jp/soranet/brvs-core:master
+    image: docker.soramitsu.co.jp/soranet/brvs-core:develop
     container_name: d3-brvs
     ports:
       - 8080:8080
@@ -102,6 +102,7 @@ services:
       CREDENTIAL_PUBKEY: b9679bbf526a1c936cd1144b56a370d376fa8246b248cd72f952b45a2f20bdad
       CREDENTIAL_PRIVKEY: 56a3c52cd039d9b73a1720052600a20962350b1ea169b4783cefbf87ed99406a
       BILLING_URL: http://data-collector:8080/
+      ACCOUNTS_HOLDER_SETTER: registration_service@d3
     volumes:
       - ../configs/brvs/keys:/config/keys
     networks:
@@ -109,7 +110,7 @@ services:
     restart: always
 
   data-collector:
-    image: docker.soramitsu.co.jp/soranet/data-collector:master
+    image: docker.soramitsu.co.jp/soranet/data-collector:develop
     container_name: "data-collector"
     restart: on-failure
     ports:
@@ -128,6 +129,15 @@ services:
       IROHA_PORT: 50051
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
+    networks:
+      - d3-network
+
+  dc-postgres:
+    image: postgres
+    container_name: "dc-postgres"
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
     networks:
       - d3-network
 
