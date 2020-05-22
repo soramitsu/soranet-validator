@@ -25,14 +25,14 @@ services:
     networks:
       - d3-network
 
-  d3-changelog:
-    image: docker.soramitsu.co.jp/soranet/changelog-endpoint:master
-    container_name: d3-changelog
-    restart: on-failure
-    ports:
-      - 9999:9999
-    networks:
-      - d3-network
+  # d3-changelog:
+  #   image: docker.soramitsu.co.jp/soranet/changelog-endpoint:master
+  #   container_name: d3-changelog
+  #   restart: on-failure
+  #   ports:
+  #     - 9999:9999
+  #   networks:
+  #     - d3-network
 
   d3-notifications:
     image: docker.soramitsu.co.jp/soranet/notifications:${TAG-master}
