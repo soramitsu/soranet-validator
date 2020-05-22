@@ -132,6 +132,25 @@ services:
     networks:
       - d3-network
 
+  report-service:
+    image: docker.soramitsu.co.jp/soranet/report-service:develop
+    container_name: "report-service"
+    restart: on-failure
+    ports:
+      - 8090:8090
+      - 19019:9010
+    depends_on:
+      - data-collector
+    env_file:
+      - ../deploy/.env-default-jvm-options
+    environment:
+      POSTGRES_HOST: dc-postgres
+      POSTGRES_DATABASE: postgres
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+    networks:
+      - d3-network
+
   dc-postgres:
     image: postgres
     container_name: "dc-postgres"
