@@ -50,7 +50,7 @@ services:
       - d3-network
 
   d3-chain-adapter:
-    image: docker.soramitsu.co.jp/soramitsu/chain-adapter:develop
+    image: docker.soramitsu.co.jp/soramitsu/chain-adapter:master
     container_name: d3-chain-adapter
     restart: on-failure
     ports:
@@ -86,7 +86,7 @@ services:
       - d3-network
 
   d3-brvs:
-    image: docker.soramitsu.co.jp/soranet/brvs-core:develop
+    image: docker.soramitsu.co.jp/soranet/brvs-core:master
     container_name: d3-brvs
     ports:
       - 8080:8080
@@ -109,7 +109,7 @@ services:
     restart: always
 
   data-collector:
-    image: docker.soramitsu.co.jp/soranet/data-collector:develop
+    image: docker.soramitsu.co.jp/soranet/data-collector:master
     container_name: "data-collector"
     restart: on-failure
     ports:
@@ -128,34 +128,6 @@ services:
       IROHA_PORT: 50051
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
-    networks:
-      - d3-network
-
-  report-service:
-    image: docker.soramitsu.co.jp/soranet/report-service:develop
-    container_name: "report-service"
-    restart: on-failure
-    ports:
-      - 8090:8090
-      - 19019:9010
-    depends_on:
-      - data-collector
-    env_file:
-      - ../deploy/.env-default-jvm-options
-    environment:
-      POSTGRES_HOST: dc-postgres
-      POSTGRES_DATABASE: postgres
-      SPRING_DATASOURCE_USERNAME: test
-      SPRING_DATASOURCE_PASSWORD: test
-    networks:
-      - d3-network
-
-  dc-postgres:
-    image: postgres
-    container_name: "dc-postgres"
-    environment:
-      POSTGRES_PASSWORD: test
-      POSTGRES_USER: test
     networks:
       - d3-network
 
