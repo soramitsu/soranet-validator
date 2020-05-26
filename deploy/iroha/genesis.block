@@ -1084,14 +1084,14 @@
            "commands": [
              {
                "setAccountDetail": {
-                 "accountId": "withdrawal_limits@notary",
+                 "accountId": "xor_limits@notary",
                  "key": "withdrawal_time_update",
                  "value": "9999999999999"
                }
              },
              {
                "setAccountDetail": {
-                 "accountId": "withdrawal_limits@notary",
+                 "accountId": "xor_limits@notary",
                  "key": "withdrawal_limit",
                  "value": "999999999999999999999999"
                }
