@@ -1067,7 +1067,7 @@
               },
               {
                 "createAccount": {
-                  "accountName": "withdrawal_limits",
+                  "accountName": "xor_limits",
                   "domainId": "notary",
                   "publicKey": "0000000000000000000000000000000000000000000000000000000000000000"
                 }
