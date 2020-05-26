@@ -1064,13 +1064,44 @@
                   "accountId": "withdrawal_billing@d3",
                   "roleName": "billing"
                 }
+              },
+              {
+                "createAccount": {
+                  "accountName": "xor_limits",
+                  "domainId": "notary",
+                  "publicKey": "0000000000000000000000000000000000000000000000000000000000000000"
+                }
               }
             ],
             "creatorAccountId": "notary@notary",
             "quorum": 1
           }
         }
-      }
+      },
+      {
+       "payload": {
+         "reducedPayload": {
+           "commands": [
+             {
+               "setAccountDetail": {
+                 "accountId": "xor_limits@notary",
+                 "key": "withdrawal_time_update",
+                 "value": "9999999999999"
+               }
+             },
+             {
+               "setAccountDetail": {
+                 "accountId": "xor_limits@notary",
+                 "key": "withdrawal_limit",
+                 "value": "999999999999999999999999"
+               }
+             }
+           ],
+           "creatorAccountId": "withdrawal@notary",
+           "quorum": 1
+         }
+       }
+     }
     ],
     "txNumber": 1,
     "height": "1",
