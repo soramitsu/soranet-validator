@@ -15,7 +15,6 @@ import com.d3.exchange.exchanger.config.rmqConfig
 import com.d3.exchange.exchanger.context.CurveExchangerContext
 import com.d3.exchange.exchanger.service.ExchangerService
 import com.d3.exchange.exchanger.strategy.CurveRateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
 import integration.helper.IrohaIntegrationHelperUtil
 import java.io.Closeable
 import java.math.BigDecimal
@@ -61,13 +60,7 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
                         queryHelper,
                         BigDecimal(0.99)
                     ),
-                    listOf(testAccountId),
-                    TradingPairsHelper(
-                        testAccountId,
-                        testDetailKey,
-                        exchangerAccountId,
-                        queryHelper
-                    )
+                    listOf(testAccountId)
                 )
             )
         )
