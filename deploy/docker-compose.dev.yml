@@ -9,7 +9,7 @@ services:
       - d3-network
 
   d3-notifications:
-    image: nexus.iroha.tech:19004/soranet/notifications:develop
+    image: docker.soramitsu.co.jp/soranet/notifications:latest
     container_name: d3-notifications
     restart: on-failure
     ports:
@@ -23,7 +23,7 @@ services:
       - d3-network
 
   d3-registration:
-    image: nexus.iroha.tech:19004/soranet/notary-registration:develop
+    image: docker.soramitsu.co.jp/soranet/notary-registration:latest
     container_name: d3-registration
     restart: on-failure
     ports:
@@ -35,7 +35,7 @@ services:
       - d3-network
 
   sora-event-notification:
-    image: nexus.iroha.tech:19004/soranet/event-notification:develop
+    image: docker.soramitsu.co.jp/soranet/event-notification:latest
     container_name: "sora-event-notification"
     restart: on-failure
     ports:
