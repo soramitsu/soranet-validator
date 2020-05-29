@@ -139,7 +139,6 @@ class ExchangerAppConfiguration {
     fun dcRateStrategy() =
         DcRateStrategy(
             exchangerDcConfig.assetRateBaseUrl,
-            exchangerDcConfig.baseAssetId,
             feeFraction()
         )
 

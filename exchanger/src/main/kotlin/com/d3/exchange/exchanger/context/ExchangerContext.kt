@@ -66,11 +66,9 @@ abstract class ExchangerContext(
                 { throw AssetNotFoundException("Seems the asset $targetAsset does not exist.", it) }
             )
 
-            val relevantAmount =
-                rateStrategy.getAmount(sourceAsset, targetAsset, BigDecimal(amount))
+            val relevantAmount = rateStrategy.getAmount(sourceAsset, targetAsset, BigDecimal(amount))
 
-            val respectPrecision =
-                respectPrecision(relevantAmount.toPlainString(), precision)
+            val respectPrecision = respectPrecision(relevantAmount.toPlainString(), precision)
 
             // If the result is not bigger than zero
             if (BigDecimal(respectPrecision) <= BigDecimal.ZERO) {

@@ -107,7 +107,7 @@ class ExchangerIntegrationTest {
     @Test
     fun correctDcExchange() {
         Assertions.assertTimeoutPreemptively(timeoutDuration) {
-            val tokenA = integrationHelper.createAsset().get()
+            val tokenA = "xor#sora"
             val tokenB = "usd#xst"
 
             val userName = String.getRandomString(7)
@@ -117,18 +117,7 @@ class ExchangerIntegrationTest {
             assertEquals(200, res.statusCode)
             val userId = "$userName@$D3_DOMAIN"
 
-            integrationHelper.addIrohaAssetTo(
-                exchangerServiceEnvironment.fiatExchangerAccountId,
-                tokenA,
-                "10"
-            )
-            integrationHelper.addIrohaAssetTo(
-                exchangerServiceEnvironment.fiatExchangerAccountId,
-                tokenB,
-                "10"
-            )
-
-            integrationHelper.addIrohaAssetTo(userId, tokenA, "1")
+            integrationHelper.addIrohaAssetTo(userId, tokenA, "10")
             integrationHelper.transferAssetIrohaFromClient(
                 userId,
                 userKeypair,
@@ -136,13 +125,13 @@ class ExchangerIntegrationTest {
                 exchangerServiceEnvironment.fiatExchangerAccountId,
                 tokenA,
                 tokenB,
-                "1"
+                "10"
             )
 
             Thread.sleep(TRANSFER_WAIT_TIME)
 
-            val etherBalance = integrationHelper.getIrohaAccountBalance(userId, tokenB)
-            assertTrue(BigDecimal(etherBalance) > BigDecimal.ZERO)
+            val newBalance = integrationHelper.getIrohaAccountBalance(userId, tokenB)
+            assertTrue(BigDecimal(newBalance) > BigDecimal.ZERO)
         }
     }
 

@@ -77,7 +77,6 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
                     queryHelper,
                     DcRateStrategy(
                         "http://localhost:8087/v1/rates",
-                        "usd#xst",
                         feeFraction
                     ),
                     listOf(testAccountId)
