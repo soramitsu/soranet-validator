@@ -140,7 +140,6 @@ class ExchangerAppConfiguration {
         DcRateStrategy(
             exchangerDcConfig.assetRateBaseUrl,
             exchangerDcConfig.baseAssetId,
-            exchangerDcConfig.rateAttribute,
             feeFraction()
         )
 

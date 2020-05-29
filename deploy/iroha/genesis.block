@@ -449,6 +449,19 @@
               },
               {
                 "createDomain": {
+                  "domainId": "xst",
+                  "defaultRole": "none"
+                }
+              },
+              {
+                "createAsset": {
+                  "assetName": "usd",
+                  "domainId": "xst",
+                  "precision": 2
+                }
+              },
+              {
+                "createDomain": {
                   "domainId": "sora",
                   "defaultRole": "sora_client"
                 }

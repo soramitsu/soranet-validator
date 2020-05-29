@@ -5,9 +5,11 @@
 
 package com.d3.exchange.exchanger.strategy
 
-import com.google.gson.JsonParser
+import com.d3.commons.util.GsonInstance
+import com.d3.exchange.exchanger.dto.RatesResponse
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.*
 
 /**
  * Rate strategy based on http querying of data collector service
@@ -15,11 +17,10 @@ import java.math.RoundingMode
 class DcRateStrategy(
     private val baseRateUrl: String,
     private val baseAssetId: String,
-    private val rateAttribute: String,
     feeFraction: BigDecimal
 ) : RateStrategy(feeFraction) {
 
-    private val parser = JsonParser()
+    private val gson = GsonInstance.get()
 
     override fun getAmount(from: String, to: String, amount: BigDecimal): BigDecimal {
         val fromRate = getRateOrBaseAsset(from)
@@ -45,16 +46,16 @@ class DcRateStrategy(
      * Queries dc and parses its response
      */
     private fun getRateFor(assetId: String): BigDecimal {
-        val nameDomain = assetId.split("#")
-        val response = khttp.get("$baseRateUrl/${nameDomain[0]}/${nameDomain[1]}")
+        val response = khttp.get("$baseRateUrl?assets=$assetId}")
         if (response.statusCode != 200) {
             throw IllegalStateException("Couldn't query data collector, response: ${response.text}")
         }
-        val jsonElement = parser.parse(response.text).asJsonObject.get(rateAttribute)
-        if (jsonElement.isJsonNull) {
+        val ratesResponse = gson.fromJson(response.text, RatesResponse::class.java)
+        val rate = BigDecimal(Optional.ofNullable(ratesResponse?.rates?.get(assetId)).orElse("0"))
+        if (rate.signum() == 0) {
             throw IllegalStateException("Asset not found in data collector")
         }
-        return BigDecimal(jsonElement.asString)
+        return rate
     }
 
     companion object {

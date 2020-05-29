@@ -17,7 +17,4 @@ interface ExchangerDcConfig {
 
     /** Base asset to read rate in comparison with **/
     val baseAssetId: String
-
-    /** Attribute to parse rate from **/
-    val rateAttribute: String
 }

@@ -38,12 +38,8 @@ class DcExchangerContext(
         val destAccountId = originalCommand.srcAccountId
 
         val transactionBuilder = Transaction.builder(exchangerAccountId)
-        if (sourceAsset != XOR_ASSET_ID) {
-            transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
-        }
-        if (destAccountId != XOR_ASSET_ID) {
-            transactionBuilder.addAssetQuantity(targetAsset, amount)
-        }
+        transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
+        transactionBuilder.addAssetQuantity(targetAsset, amount)
         irohaConsumer.send(
             transactionBuilder
                 .transferAsset(
@@ -57,9 +53,5 @@ class DcExchangerContext(
         ).failure {
             throw it
         }
-    }
-
-    companion object {
-        private const val XOR_ASSET_ID = "xor#sora"
     }
 }
