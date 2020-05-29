@@ -46,7 +46,7 @@ class DcRateStrategy(
      * Queries dc and parses its response
      */
     private fun getRateFor(assetId: String): BigDecimal {
-        val response = khttp.get("$baseRateUrl?assets=$assetId}")
+        val response = khttp.get("$baseRateUrl?assets=${assetId.replace("#", "%23")}}")
         if (response.statusCode != 200) {
             throw IllegalStateException("Couldn't query data collector, response: ${response.text}")
         }
