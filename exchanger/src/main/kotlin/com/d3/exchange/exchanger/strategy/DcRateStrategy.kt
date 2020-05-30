@@ -5,59 +5,50 @@
 
 package com.d3.exchange.exchanger.strategy
 
-import com.google.gson.JsonParser
+import com.d3.commons.util.GsonInstance
+import com.d3.exchange.exchanger.dto.RatesResponse
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 /**
  * Rate strategy based on http querying of data collector service
  */
 class DcRateStrategy(
     private val baseRateUrl: String,
-    private val baseAssetId: String,
-    private val rateAttribute: String,
     feeFraction: BigDecimal
 ) : RateStrategy(feeFraction) {
 
-    private val parser = JsonParser()
+    private val gson = GsonInstance.get()
 
     override fun getAmount(from: String, to: String, amount: BigDecimal): BigDecimal {
-        val fromRate = getRateOrBaseAsset(from)
-        val toRate = getRateOrBaseAsset(to)
+        val rate = getRateFor(to, from)
         val amountWithRespectToFee = getAmountWithRespectToFee(amount)
-        return toRate
-            .multiply(amountWithRespectToFee)
-            .divide(
-                fromRate,
-                MAX_PRECISION,
-                RoundingMode.HALF_DOWN
-            )
+        return rate.multiply(amountWithRespectToFee)
     }
-
-    private fun getRateOrBaseAsset(assetId: String) =
-        if (assetId == baseAssetId) {
-            BigDecimal.ONE
-        } else {
-            getRateFor(assetId)
-        }
 
     /**
      * Queries dc and parses its response
      */
-    private fun getRateFor(assetId: String): BigDecimal {
-        val nameDomain = assetId.split("#")
-        val response = khttp.get("$baseRateUrl/${nameDomain[0]}/${nameDomain[1]}")
+    private fun getRateFor(assetId: String, baseAssetId: String): BigDecimal {
+        val response = khttp.get(
+            baseRateUrl,
+            params = mapOf(
+                ASSETS_PARAM_NAME to assetId,
+                BASE_ASSET_PARAM_NAME to baseAssetId
+            )
+        )
         if (response.statusCode != 200) {
             throw IllegalStateException("Couldn't query data collector, response: ${response.text}")
         }
-        val jsonElement = parser.parse(response.text).asJsonObject.get(rateAttribute)
-        if (jsonElement.isJsonNull) {
+        val ratesResponse = gson.fromJson(response.text, RatesResponse::class.java)
+        val rate = BigDecimal(ratesResponse?.rates?.get(assetId) ?: "0")
+        if (rate.signum() == 0) {
             throw IllegalStateException("Asset not found in data collector")
         }
-        return BigDecimal(jsonElement.asString)
+        return rate
     }
 
     companion object {
-        const val MAX_PRECISION = 18
+        const val ASSETS_PARAM_NAME = "assets"
+        const val BASE_ASSET_PARAM_NAME = "base"
     }
 }

@@ -10,9 +10,7 @@ import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.exchange.exchanger.exceptions.AssetNotFoundException
 import com.d3.exchange.exchanger.exceptions.TooLittleAssetVolumeException
-import com.d3.exchange.exchanger.exceptions.UnsupportedTradingPairException
 import com.d3.exchange.exchanger.strategy.RateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
 import com.d3.exchange.exchanger.util.respectPrecision
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
@@ -29,7 +27,6 @@ abstract class ExchangerContext(
     protected val queryHelper: IrohaQueryHelper,
     private val rateStrategy: RateStrategy,
     protected val liquidityProviderAccounts: List<String>,
-    protected val tradingPairsHelper: TradingPairsHelper,
     protected val exchangerAccountId: String
 ) {
 
@@ -39,7 +36,6 @@ abstract class ExchangerContext(
      */
     fun performConversions(block: BlockOuterClass.Block) {
         block.blockV1.payload.transactionsList.map { transaction ->
-            tradingPairsHelper.updateTradingPairsOnBlock(transaction)
             transaction.payload.reducedPayload.commandsList.filter { command ->
                 command.hasTransferAsset()
                         && !liquidityProviderAccounts.contains(command.transferAsset.srcAccountId)
@@ -70,16 +66,9 @@ abstract class ExchangerContext(
                 { throw AssetNotFoundException("Seems the asset $targetAsset does not exist.", it) }
             )
 
-            val sourceTrades = tradingPairsHelper.tradingPairs[sourceAsset]
-            if (sourceTrades == null || !sourceTrades.contains(targetAsset)) {
-                throw UnsupportedTradingPairException("Not supported trading pair: $sourceAsset -> $targetAsset")
-            }
+            val relevantAmount = rateStrategy.getAmount(sourceAsset, targetAsset, BigDecimal(amount))
 
-            val relevantAmount =
-                rateStrategy.getAmount(sourceAsset, targetAsset, BigDecimal(amount))
-
-            val respectPrecision =
-                respectPrecision(relevantAmount.toPlainString(), precision)
+            val respectPrecision = respectPrecision(relevantAmount.toPlainString(), precision)
 
             // If the result is not bigger than zero
             if (BigDecimal(respectPrecision) <= BigDecimal.ZERO) {

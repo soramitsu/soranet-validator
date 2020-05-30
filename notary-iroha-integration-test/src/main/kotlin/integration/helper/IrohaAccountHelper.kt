@@ -187,7 +187,11 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
     open val expansionCreatorAccount = ChangelogInterface.superuserAccountId
 
     /** Account that exchanges tokens */
-    open val exchangerAccount by lazy {
+    open val cryptoExchangerAccount by lazy {
+        createTesterAccount("exchanger", listOf("exchange"))
+    }
+
+    open val fiatExchangerAccount by lazy {
         createTesterAccount("exchanger", listOf("exchange"))
     }
 

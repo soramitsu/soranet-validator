@@ -8,7 +8,6 @@ package com.d3.exchange.exchanger.context
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumer
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.exchange.exchanger.strategy.DcRateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
 import com.github.kittinunf.result.failure
 import iroha.protocol.Commands
 import jp.co.soramitsu.iroha.java.Transaction
@@ -20,14 +19,12 @@ class DcExchangerContext(
     irohaConsumer: IrohaConsumer,
     queryhelper: IrohaQueryHelper,
     dcRateStrategy: DcRateStrategy,
-    liquidityProviderAccounts: List<String>,
-    tradingPairsHelper: TradingPairsHelper
+    liquidityProviderAccounts: List<String>
 ) : ExchangerContext(
     irohaConsumer,
     queryhelper,
     dcRateStrategy,
     liquidityProviderAccounts,
-    tradingPairsHelper,
     irohaConsumer.creator
 ) {
 
@@ -41,12 +38,8 @@ class DcExchangerContext(
         val destAccountId = originalCommand.srcAccountId
 
         val transactionBuilder = Transaction.builder(exchangerAccountId)
-        if (sourceAsset != XOR_ASSET_ID) {
-            transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
-        }
-        if (destAccountId != XOR_ASSET_ID) {
-            transactionBuilder.addAssetQuantity(targetAsset, amount)
-        }
+        transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
+        transactionBuilder.addAssetQuantity(targetAsset, amount)
         irohaConsumer.send(
             transactionBuilder
                 .transferAsset(
@@ -60,9 +53,5 @@ class DcExchangerContext(
         ).failure {
             throw it
         }
-    }
-
-    companion object {
-        private const val XOR_ASSET_ID = "xor#sora"
     }
 }

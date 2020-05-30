@@ -347,7 +347,9 @@
                     "can_receive",
                     "can_get_my_acc_ast",
                     "can_get_my_acc_detail",
-                    "can_read_assets"
+                    "can_read_assets",
+                    "can_add_asset_qty",
+                    "can_subtract_asset_qty"
                   ]
                 }
               },
@@ -445,6 +447,19 @@
                 "createDomain": {
                   "domainId": "ethereum",
                   "defaultRole": "none"
+                }
+              },
+              {
+                "createDomain": {
+                  "domainId": "xst",
+                  "defaultRole": "none"
+                }
+              },
+              {
+                "createAsset": {
+                  "assetName": "usd",
+                  "domainId": "xst",
+                  "precision": 2
                 }
               },
               {

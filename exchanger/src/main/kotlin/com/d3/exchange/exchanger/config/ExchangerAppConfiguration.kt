@@ -15,7 +15,6 @@ import com.d3.exchange.exchanger.context.CurveExchangerContext
 import com.d3.exchange.exchanger.context.DcExchangerContext
 import com.d3.exchange.exchanger.strategy.CurveRateStrategy
 import com.d3.exchange.exchanger.strategy.DcRateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.QueryAPI
 import jp.co.soramitsu.iroha.java.Utils
@@ -101,22 +100,12 @@ class ExchangerAppConfiguration {
         )
 
     @Bean
-    fun curveTradingPairsHelper() =
-        TradingPairsHelper(
-            exchangerConfig.tradePairSetter,
-            exchangerConfig.tradePairKey,
-            curveAccountId(),
-            curveQueryHelper()
-        )
-
-    @Bean
     fun curveExchangerContext() =
         CurveExchangerContext(
             curveIrohaConsumer(),
             curveQueryHelper(),
             curveRateStrategy(),
-            liquidityProviders(),
-            curveTradingPairsHelper()
+            liquidityProviders()
         )
 
     @Bean
@@ -150,18 +139,7 @@ class ExchangerAppConfiguration {
     fun dcRateStrategy() =
         DcRateStrategy(
             exchangerDcConfig.assetRateBaseUrl,
-            exchangerDcConfig.baseAssetId,
-            exchangerDcConfig.rateAttribute,
             feeFraction()
-        )
-
-    @Bean
-    fun dcTradingPairsHelper() =
-        TradingPairsHelper(
-            exchangerConfig.tradePairSetter,
-            exchangerConfig.tradePairKey,
-            dcAccountId(),
-            dcQueryHelper()
         )
 
     @Bean
@@ -170,8 +148,7 @@ class ExchangerAppConfiguration {
             dcIrohaConsumer(),
             dcQueryHelper(),
             dcRateStrategy(),
-            liquidityProviders(),
-            dcTradingPairsHelper()
+            liquidityProviders()
         )
 
     @Bean
