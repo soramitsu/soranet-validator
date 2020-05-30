@@ -8,7 +8,6 @@ package com.d3.exchange.exchanger.strategy
 import com.d3.commons.util.GsonInstance
 import com.d3.exchange.exchanger.dto.RatesResponse
 import java.math.BigDecimal
-import java.util.*
 
 /**
  * Rate strategy based on http querying of data collector service
@@ -41,7 +40,7 @@ class DcRateStrategy(
             throw IllegalStateException("Couldn't query data collector, response: ${response.text}")
         }
         val ratesResponse = gson.fromJson(response.text, RatesResponse::class.java)
-        val rate = BigDecimal(Optional.ofNullable(ratesResponse?.rates?.get(assetId)).orElse("0"))
+        val rate = BigDecimal(ratesResponse?.rates?.get(assetId) ?: "0")
         if (rate.signum() == 0) {
             throw IllegalStateException("Asset not found in data collector")
         }
