@@ -20,7 +20,7 @@ class DcRateStrategy(
     private val gson = GsonInstance.get()
 
     override fun getAmount(from: String, to: String, amount: BigDecimal): BigDecimal {
-        val rate = getRateFor(to, from)
+        val rate = getRateFor(from, to)
         val amountWithRespectToFee = getAmountWithRespectToFee(amount)
         return rate.multiply(amountWithRespectToFee)
     }
