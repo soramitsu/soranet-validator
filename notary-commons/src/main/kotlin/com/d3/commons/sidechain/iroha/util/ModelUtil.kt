@@ -230,7 +230,7 @@ object ModelUtil {
      * @param description - transfer description
      * @param amount - amount
      * @param creationTime - time of transaction creation. Current time by default.
-     * @param quorum - tx quorum. 1 by default
+     * @param quorum - tx quorum. consumer's one by default
      * @return hex representation of transaction hash
      */
     fun transferAssetIroha(
@@ -241,7 +241,7 @@ object ModelUtil {
         description: String,
         amount: String,
         creationTime: Long = System.currentTimeMillis(),
-        quorum: Int = 1
+        quorum: Int = irohaConsumer.getConsumerQuorum().get()
     ): Result<String, Exception> {
         val transaction = Transaction
             .builder(irohaConsumer.creator, creationTime)
