@@ -14,11 +14,13 @@ import com.d3.exchange.exchanger.strategy.CurveRateStrategy
  */
 class CurveExchangerContext(
     irohaConsumer: IrohaConsumer,
+    utilityIrohaConsumer: IrohaConsumer,
     queryHelper: IrohaQueryHelper,
     curveRateStrategy: CurveRateStrategy,
     liquidityProviderAccounts: List<String>
 ) : ExchangerContext(
     irohaConsumer,
+    utilityIrohaConsumer,
     queryHelper,
     curveRateStrategy,
     liquidityProviderAccounts,

@@ -33,6 +33,14 @@ val exchangerConfig =
 
 val rmqConfig = loadRawLocalConfigs("rmq", RMQConfig::class.java, "rmq.properties")
 
+val exchangerInfoConfig =
+    loadRawLocalConfigs(
+        "exchanger-info",
+        // the same format for now
+        ExchangerCurveContextConfig::class.java,
+        configFilename
+    )
+
 val exchangerCurveConfig =
     loadRawLocalConfigs(
         "exchanger-crypto",
@@ -65,6 +73,9 @@ class ExchangerAppConfiguration {
     fun liquidityProviders() = exchangerConfig.liquidityProviders.split(",").toList()
 
     @Bean
+    fun infoIrohaCredential() = IrohaCredential(exchangerInfoConfig.irohaCredential)
+
+    @Bean
     fun curveIrohaCredential() = IrohaCredential(exchangerCurveConfig.irohaCredential)
 
     @Bean
@@ -78,24 +89,27 @@ class ExchangerAppConfiguration {
     fun curveAccountId() = exchangerCurveConfig.irohaCredential.accountId
 
     @Bean
-    fun curveQueryAPI() =
+    fun infoQueryAPI() =
         QueryAPI(
             irohaAPI(),
-            curveAccountId(),
+            exchangerInfoConfig.irohaCredential.accountId,
             Utils.parseHexKeypair(
-                exchangerCurveConfig.irohaCredential.pubkey,
-                exchangerCurveConfig.irohaCredential.privkey
+                exchangerInfoConfig.irohaCredential.pubkey,
+                exchangerInfoConfig.irohaCredential.privkey
             )
         )
 
     @Bean
-    fun curveQueryHelper() = IrohaQueryHelperImpl(curveQueryAPI())
+    fun infoIrohaConsumer() = IrohaConsumerImpl(infoIrohaCredential(), irohaAPI())
+
+    @Bean
+    fun queryHelper() = IrohaQueryHelperImpl(infoQueryAPI())
 
     @Bean
     fun curveRateStrategy() =
         CurveRateStrategy(
             curveAccountId(),
-            curveQueryHelper(),
+            queryHelper(),
             feeFraction()
         )
 
@@ -103,7 +117,8 @@ class ExchangerAppConfiguration {
     fun curveExchangerContext() =
         CurveExchangerContext(
             curveIrohaConsumer(),
-            curveQueryHelper(),
+            infoIrohaConsumer(),
+            queryHelper(),
             curveRateStrategy(),
             liquidityProviders()
         )
@@ -119,23 +134,6 @@ class ExchangerAppConfiguration {
         )
 
     @Bean
-    fun dcAccountId() = exchangerDcConfig.irohaCredential.accountId
-
-    @Bean
-    fun dcQueryAPI() =
-        QueryAPI(
-            irohaAPI(),
-            dcAccountId(),
-            Utils.parseHexKeypair(
-                exchangerDcConfig.irohaCredential.pubkey,
-                exchangerDcConfig.irohaCredential.privkey
-            )
-        )
-
-    @Bean
-    fun dcQueryHelper() = IrohaQueryHelperImpl(dcQueryAPI())
-
-    @Bean
     fun dcRateStrategy() =
         DcRateStrategy(
             exchangerDcConfig.assetRateBaseUrl,
@@ -146,7 +144,8 @@ class ExchangerAppConfiguration {
     fun dcExchangerContext() =
         DcExchangerContext(
             dcIrohaConsumer(),
-            dcQueryHelper(),
+            infoIrohaConsumer(),
+            queryHelper(),
             dcRateStrategy(),
             liquidityProviders()
         )
