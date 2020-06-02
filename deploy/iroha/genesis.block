@@ -346,12 +346,12 @@
                     "can_transfer",
                     "can_receive",
                     "can_get_my_acc_ast",
-                    "can_get_my_acc_detail",
                     "can_read_assets",
                     "can_add_asset_qty",
                     "can_subtract_asset_qty",
                     "can_get_all_acc_detail",
-                    "can_set_detail"
+                    "can_set_detail",
+                    "can_get_all_accounts"
                   ]
                 }
               },
