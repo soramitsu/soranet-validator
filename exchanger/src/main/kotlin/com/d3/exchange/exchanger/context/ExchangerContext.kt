@@ -18,6 +18,8 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
+import iroha.protocol.Primitive
+import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import java.math.BigDecimal
@@ -33,6 +35,35 @@ abstract class ExchangerContext(
     protected val liquidityProviderAccounts: List<String>,
     protected val exchangerAccountId: String
 ) {
+
+    init {
+        val optional = queryHelper.getAccountDetails(
+            exchangerAccountId,
+            exchangerAccountId,
+            GRANTED_KEY
+        ).get()
+        if (!optional.isPresent || optional.get() != GRANTED_VALUE) {
+            val createdTime = System.currentTimeMillis()
+            exchangerIrohaConsumer.send(
+                Transaction.builder(exchangerAccountId, createdTime - (createdTime % MILLIS_IN_DAY))
+                    .setQuorum(exchangerIrohaConsumer.getConsumerQuorum().get())
+                    .setAccountDetail(exchangerAccountId, GRANTED_KEY, GRANTED_VALUE)
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_add_my_signatory
+                    )
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_remove_my_signatory
+                    )
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_set_my_quorum
+                    )
+                    .build()
+            )
+        }
+    }
 
     /**
      * Performs conversion based on the block specified
@@ -157,5 +188,10 @@ abstract class ExchangerContext(
         )
     }
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val expansionTriggerAccountId = "superuser@bootstrap"
+        const val MILLIS_IN_DAY = 86400000
+        const val GRANTED_KEY = "granted"
+        const val GRANTED_VALUE = "true"
+    }
 }
