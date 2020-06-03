@@ -70,21 +70,20 @@ abstract class ExchangerContext(
      * @param block block to process
      */
     fun performConversions(block: BlockOuterClass.Block) {
-        var txHash = ""
-        var creationTime = 0L
-        block.blockV1.payload.transactionsList.map { transaction ->
-            txHash = normalizeTransactionHash(Utils.toHexHash(transaction), block.blockV1.payload.height)
-            creationTime = transaction.payload.reducedPayload.createdTime
-            transaction.payload.reducedPayload.commandsList.filter { command ->
-                command.hasTransferAsset()
-                        && !liquidityProviderAccounts.contains(command.transferAsset.srcAccountId)
-                        && command.transferAsset.destAccountId == exchangerAccountId
-            }.map { command ->
-                command.transferAsset
-            }
-        }.map { exchangeCommands ->
-            exchangeCommands.forEach { command ->
-                performConversion(command, addCommandIndex(txHash, command), creationTime)
+        val payload = block.blockV1.payload
+        payload.transactionsList.forEach { transaction ->
+            val txHash = normalizeTransactionHash(Utils.toHexHash(transaction), payload.height)
+            val reducedPayload = transaction.payload.reducedPayload
+            val creationTime = reducedPayload.createdTime
+            for (i in 0 until reducedPayload.commandsCount) {
+                val command = reducedPayload.commandsList[i]
+                if (command.hasTransferAsset()
+                    && !liquidityProviderAccounts.contains(command.transferAsset.srcAccountId)
+                    && command.transferAsset.destAccountId == exchangerAccountId
+                ) {
+                    val transferAsset = command.transferAsset
+                    performConversion(transferAsset, addCommandIndex(txHash, i), creationTime)
+                }
             }
         }
     }

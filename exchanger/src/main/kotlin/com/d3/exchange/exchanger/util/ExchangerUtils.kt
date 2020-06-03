@@ -5,8 +5,6 @@
 
 package com.d3.exchange.exchanger.util
 
-import iroha.protocol.Commands
-
 private const val DELIMITER = '.'
 
 /**
@@ -36,5 +34,4 @@ fun normalizeTransactionHash(hash: String, height: Long) = hash.substring(0..32)
 /**
  * Returns a string with an underscore and index being added
  */
-fun addCommandIndex(str: String, transferAsset: Commands.TransferAsset) =
-    "${str}_${(transferAsset.hashCode() % Short.MAX_VALUE).toString().replace("-", "")}"
+fun addCommandIndex(str: String, commandIndex: Int) = "${str}_${commandIndex}"
