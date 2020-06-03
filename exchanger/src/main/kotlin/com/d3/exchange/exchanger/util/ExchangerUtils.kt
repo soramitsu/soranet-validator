@@ -12,6 +12,9 @@ private const val DELIMITER = '.'
  * @return String {0-9}*.{0-9}[precision]
  */
 fun respectPrecision(rawValue: String, precision: Int): String {
+    if (precision == 0) {
+        return rawValue.substringBefore(DELIMITER)
+    }
     val substringAfter = rawValue.substringAfter(DELIMITER)
     val diff = substringAfter.length - precision
     return when {
