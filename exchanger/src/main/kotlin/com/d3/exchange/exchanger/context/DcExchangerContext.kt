@@ -17,11 +17,13 @@ import jp.co.soramitsu.iroha.java.Transaction
  */
 class DcExchangerContext(
     irohaConsumer: IrohaConsumer,
+    utilityIrohaConsumer: IrohaConsumer,
     queryhelper: IrohaQueryHelper,
     dcRateStrategy: DcRateStrategy,
     liquidityProviderAccounts: List<String>
 ) : ExchangerContext(
     irohaConsumer,
+    utilityIrohaConsumer,
     queryhelper,
     dcRateStrategy,
     liquidityProviderAccounts,
@@ -31,16 +33,21 @@ class DcExchangerContext(
     /**
      * Burns and mints corresponding fiat currencies together with sending
      */
-    override fun performTransferLogic(originalCommand: Commands.TransferAsset, amount: String) {
+    override fun performTransferLogic(
+        originalCommand: Commands.TransferAsset,
+        amount: String,
+        creationTime: Long
+    ) {
         val sourceAsset = originalCommand.assetId
         val srcAmount = originalCommand.amount
         val targetAsset = originalCommand.description
         val destAccountId = originalCommand.srcAccountId
 
-        val transactionBuilder = Transaction.builder(exchangerAccountId)
+        val transactionBuilder = Transaction.builder(exchangerAccountId, creationTime)
         transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
         transactionBuilder.addAssetQuantity(targetAsset, amount)
-        irohaConsumer.send(
+        transactionBuilder.setQuorum(exchangerIrohaConsumer.getConsumerQuorum().get())
+        exchangerIrohaConsumer.send(
             transactionBuilder
                 .transferAsset(
                     exchangerAccountId,

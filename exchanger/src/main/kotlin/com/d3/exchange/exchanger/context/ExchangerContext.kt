@@ -11,11 +11,16 @@ import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.exchange.exchanger.exceptions.AssetNotFoundException
 import com.d3.exchange.exchanger.exceptions.TooLittleAssetVolumeException
 import com.d3.exchange.exchanger.strategy.RateStrategy
+import com.d3.exchange.exchanger.util.addCommandIndex
+import com.d3.exchange.exchanger.util.normalizeTransactionHash
 import com.d3.exchange.exchanger.util.respectPrecision
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
+import iroha.protocol.Primitive
+import jp.co.soramitsu.iroha.java.Transaction
+import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import java.math.BigDecimal
 
@@ -23,19 +28,53 @@ import java.math.BigDecimal
  * Context telling exchanger how to process inputs
  */
 abstract class ExchangerContext(
-    protected val irohaConsumer: IrohaConsumer,
+    protected val exchangerIrohaConsumer: IrohaConsumer,
+    protected val utilityIrohaConsumer: IrohaConsumer,
     protected val queryHelper: IrohaQueryHelper,
     private val rateStrategy: RateStrategy,
     protected val liquidityProviderAccounts: List<String>,
     protected val exchangerAccountId: String
 ) {
 
+    init {
+        val optional = queryHelper.getAccountDetails(
+            exchangerAccountId,
+            exchangerAccountId,
+            GRANTED_KEY
+        ).get()
+        if (!optional.isPresent || optional.get() != GRANTED_VALUE) {
+            val createdTime = System.currentTimeMillis()
+            exchangerIrohaConsumer.send(
+                Transaction.builder(exchangerAccountId, createdTime - (createdTime % MILLIS_IN_DAY))
+                    .setQuorum(exchangerIrohaConsumer.getConsumerQuorum().get())
+                    .setAccountDetail(exchangerAccountId, GRANTED_KEY, GRANTED_VALUE)
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_add_my_signatory
+                    )
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_remove_my_signatory
+                    )
+                    .grantPermission(
+                        expansionTriggerAccountId,
+                        Primitive.GrantablePermission.can_set_my_quorum
+                    )
+                    .build()
+            )
+        }
+    }
+
     /**
      * Performs conversion based on the block specified
      * @param block block to process
      */
     fun performConversions(block: BlockOuterClass.Block) {
+        var txHash = ""
+        var creationTime = 0L
         block.blockV1.payload.transactionsList.map { transaction ->
+            txHash = normalizeTransactionHash(Utils.toHexHash(transaction), block.blockV1.payload.height)
+            creationTime = transaction.payload.reducedPayload.createdTime
             transaction.payload.reducedPayload.commandsList.filter { command ->
                 command.hasTransferAsset()
                         && !liquidityProviderAccounts.contains(command.transferAsset.srcAccountId)
@@ -44,8 +83,8 @@ abstract class ExchangerContext(
                 command.transferAsset
             }
         }.map { exchangeCommands ->
-            exchangeCommands.forEach { exchangeCommand ->
-                performConversion(exchangeCommand)
+            exchangeCommands.forEach { command ->
+                performConversion(command, addCommandIndex(txHash, command), creationTime)
             }
         }
     }
@@ -54,7 +93,11 @@ abstract class ExchangerContext(
      * Performs checking of data and converts assets using specified [RateStrategy]
      * If something goes wrong performs a rollback
      */
-    private fun performConversion(exchangeCommand: Commands.TransferAsset) {
+    private fun performConversion(
+        exchangeCommand: Commands.TransferAsset,
+        commandId: String,
+        creationTime: Long
+    ) {
         val sourceAsset = exchangeCommand.assetId
         val targetAsset = exchangeCommand.description
         val amount = exchangeCommand.amount
@@ -68,14 +111,16 @@ abstract class ExchangerContext(
 
             val relevantAmount = rateStrategy.getAmount(sourceAsset, targetAsset, BigDecimal(amount))
 
-            val respectPrecision = respectPrecision(relevantAmount.toPlainString(), precision)
+            var respectPrecision = respectPrecision(relevantAmount.toPlainString(), precision)
 
             // If the result is not bigger than zero
             if (BigDecimal(respectPrecision) <= BigDecimal.ZERO) {
                 throw TooLittleAssetVolumeException("Asset supplement is too low for specified conversion")
             }
 
-            performTransferLogic(exchangeCommand, respectPrecision)
+            respectPrecision = negotiateAmount(commandId, respectPrecision)
+
+            performTransferLogic(exchangeCommand, respectPrecision, creationTime)
 
         }.fold(
             { logger.info { "Successfully converted $amount of $sourceAsset to $targetAsset." } },
@@ -83,12 +128,13 @@ abstract class ExchangerContext(
                 logger.error("Exchanger error occurred. Performing rollback.", it)
 
                 ModelUtil.transferAssetIroha(
-                    irohaConsumer,
+                    exchangerIrohaConsumer,
                     exchangerAccountId,
                     destAccountId,
                     sourceAsset,
                     "Conversion rollback transaction",
-                    amount
+                    amount,
+                    creationTime = creationTime
                 ).failure { ex ->
                     logger.error("Error during rollback", ex)
                 }
@@ -98,22 +144,54 @@ abstract class ExchangerContext(
     /**
      * Customizable transfer logic
      */
-    protected open fun performTransferLogic(originalCommand: Commands.TransferAsset, amount: String) {
+    protected open fun performTransferLogic(
+        originalCommand: Commands.TransferAsset,
+        amount: String,
+        creationTime: Long
+    ) {
         val sourceAsset = originalCommand.assetId
         val targetAsset = originalCommand.description
         val destAccountId = originalCommand.srcAccountId
 
         ModelUtil.transferAssetIroha(
-            irohaConsumer,
+            exchangerIrohaConsumer,
             exchangerAccountId,
             destAccountId,
             targetAsset,
             "Conversion from $sourceAsset to $targetAsset",
-            amount
+            amount,
+            creationTime = creationTime
         ).failure {
             throw it
         }
     }
 
-    companion object : KLogging()
+    private fun negotiateAmount(commandId: String, amount: String): String {
+        return ModelUtil.compareAndsetAccountDetail(
+            utilityIrohaConsumer,
+            utilityIrohaConsumer.creator,
+            commandId,
+            amount
+        ).fold(
+            {
+                logger.info("Set amount $amount for operation $commandId")
+                amount
+            },
+            {
+                logger.warn("Other instance has set the amount for operation $commandId", it)
+                queryHelper.getAccountDetails(
+                    utilityIrohaConsumer.creator,
+                    utilityIrohaConsumer.creator,
+                    commandId
+                ).get().get()
+            }
+        )
+    }
+
+    companion object : KLogging() {
+        const val expansionTriggerAccountId = "superuser@bootstrap"
+        const val MILLIS_IN_DAY = 86400000
+        const val GRANTED_KEY = "granted"
+        const val GRANTED_VALUE = "true"
+    }
 }

@@ -6,14 +6,11 @@
 package com.d3.exchange.util
 
 import com.d3.chainadapter.client.ReliableIrohaChainListener
-import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumerImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.commons.util.getRandomString
 import com.d3.exchange.exchanger.config.EXCHANGER_SERVICE_NAME
-import com.d3.exchange.exchanger.config.ExchangerDcConfig
-import com.d3.exchange.exchanger.config.configFilename
 import com.d3.exchange.exchanger.config.rmqConfig
 import com.d3.exchange.exchanger.context.CurveExchangerContext
 import com.d3.exchange.exchanger.context.DcExchangerContext
@@ -50,6 +47,9 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
 
     private val fiatIrohaConsumer = IrohaConsumerImpl(fiatExchangerCredential, integrationHelper.irohaAPI)
 
+    private val infoIrohaConsumer =
+        IrohaConsumerImpl(integrationHelper.testCredential, integrationHelper.irohaAPI)
+
     private val chainListener = ReliableIrohaChainListener(
         rmqConfig,
         "exchanger_blocks_${String.getRandomString(5)}",
@@ -63,7 +63,7 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
     fun init() {
         val feeFraction = BigDecimal(0.99)
         var property = System.getProperty("DC_CONTAINER_IP")
-        if(property.isNullOrBlank()) {
+        if (property.isNullOrBlank()) {
             property = "http://data-collector"
         }
         val baseRateUrl = "$property:8080/v1/rates"
@@ -72,6 +72,7 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
             listOf(
                 CurveExchangerContext(
                     cryptoIrohaConsumer,
+                    infoIrohaConsumer,
                     queryHelper,
                     CurveRateStrategy(
                         cryptoExchangerAccountId,
@@ -82,6 +83,7 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
                 ),
                 DcExchangerContext(
                     fiatIrohaConsumer,
+                    infoIrohaConsumer,
                     queryHelper,
                     DcRateStrategy(
                         baseRateUrl,
