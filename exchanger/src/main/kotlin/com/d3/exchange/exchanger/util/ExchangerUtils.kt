@@ -37,4 +37,4 @@ fun normalizeTransactionHash(hash: String, height: Long) = hash.substring(0..32)
  * Returns a string with an underscore and index being added
  */
 fun addCommandIndex(str: String, transferAsset: Commands.TransferAsset) =
-    "${str}_${transferAsset.hashCode() % Short.MAX_VALUE}"
+    "${str}_${(transferAsset.hashCode() % Short.MAX_VALUE).toString().replace("-", "")}"
