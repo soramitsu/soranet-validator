@@ -157,6 +157,7 @@ class ExchangerAppConfiguration {
     fun chainListener() =
         ReliableIrohaChainListener(
             rmqConfig,
-            exchangerConfig.irohaBlockQueue
+            exchangerConfig.irohaBlockQueue,
+            autoAck = false
         )
 }
