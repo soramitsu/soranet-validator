@@ -23,6 +23,7 @@ import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import java.math.BigDecimal
+import java.util.*
 
 /**
  * Context telling exchanger how to process inputs
@@ -178,11 +179,20 @@ abstract class ExchangerContext(
             },
             {
                 logger.warn("Other instance has set the amount for operation $commandId", it)
-                queryHelper.getAccountDetails(
-                    utilityIrohaConsumer.creator,
-                    utilityIrohaConsumer.creator,
-                    commandId
-                ).get().get()
+                var savedDetail: Optional<String>
+                do {
+                    logger.info("Querying Iroha for the amount of the operation $commandId", it)
+                    savedDetail = queryHelper.getAccountDetails(
+                        utilityIrohaConsumer.creator,
+                        utilityIrohaConsumer.creator,
+                        commandId
+                    ).get()
+                    if (!savedDetail.isPresent) {
+                        logger.warn("Iroha detail has not been set yet, waiting $QUERY_TIMEOUT ms")
+                        Thread.sleep(QUERY_TIMEOUT)
+                    }
+                } while (!savedDetail.isPresent)
+                savedDetail.get()
             }
         )
     }
@@ -190,6 +200,7 @@ abstract class ExchangerContext(
     companion object : KLogging() {
         const val expansionTriggerAccountId = "superuser@bootstrap"
         const val MILLIS_IN_DAY = 86400000
+        const val QUERY_TIMEOUT = 1000L
         const val GRANTED_KEY = "granted"
         const val GRANTED_VALUE = "true"
     }
