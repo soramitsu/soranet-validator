@@ -97,6 +97,33 @@ object ModelUtil {
     }
 
     /**
+     * Send CompareAndSetAccountDetail to Iroha
+     * @param irohaConsumer - iroha network layer
+     * @param accountId - account to set details
+     * @param key - key of detail
+     * @param value - value of detail
+     * @param oldValue - optional previous value of detail
+     * @param quorum - tx quorum. 1 by default
+     * @return hex representation of transaction hash
+     */
+    fun compareAndsetAccountDetail(
+        irohaConsumer: IrohaConsumer,
+        accountId: String,
+        key: String,
+        value: String,
+        oldValue: String? = null,
+        createdTime: Long = System.currentTimeMillis(),
+        quorum: Int = 1
+    ): Result<String, Exception> {
+        val transactionBuilder = Transaction
+            .builder(irohaConsumer.creator)
+            .compareAndSetAccountDetail(accountId, key, value, oldValue)
+            .setCreatedTime(createdTime)
+            .setQuorum(quorum)
+        return irohaConsumer.send(transactionBuilder.build())
+    }
+
+    /**
      * Send CreateAccount to Iroha
      * @param irohaConsumer - iroha network layer
      * @param name - account to be created
@@ -230,7 +257,7 @@ object ModelUtil {
      * @param description - transfer description
      * @param amount - amount
      * @param creationTime - time of transaction creation. Current time by default.
-     * @param quorum - tx quorum. 1 by default
+     * @param quorum - tx quorum. consumer's one by default
      * @return hex representation of transaction hash
      */
     fun transferAssetIroha(
@@ -241,7 +268,7 @@ object ModelUtil {
         description: String,
         amount: String,
         creationTime: Long = System.currentTimeMillis(),
-        quorum: Int = 1
+        quorum: Int = irohaConsumer.getConsumerQuorum().get()
     ): Result<String, Exception> {
         val transaction = Transaction
             .builder(irohaConsumer.creator, creationTime)

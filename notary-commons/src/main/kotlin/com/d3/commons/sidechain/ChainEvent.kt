@@ -83,6 +83,7 @@ sealed class SideChainEvent {
         /**
          * Event which occurs when custodian deposits some amount of asset anchored on chain
          * @param hash transaction hash
+         * @param time transaction time
          * @param user user name in Iroha
          * @param asset asset name
          * @param amount amount of tokens
@@ -100,6 +101,7 @@ sealed class SideChainEvent {
         /**
          * Event which occurs when custodian deposits some amount of certain asset anchored on Iroha
          * @param hash transaction hash
+         * @param time transaction time
          * @param user user name in Iroha
          * @param asset asset name
          * @param amount amount of tokens

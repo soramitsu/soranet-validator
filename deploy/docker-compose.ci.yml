@@ -39,6 +39,11 @@ services:
     networks:
     - d3-notary
 
+  data-collector:
+    container_name: data-collector-${SUBNET}
+    networks:
+      - d3-notary
+
   d3-brvs-mongodb:
     container_name: d3-brvs-mongodb-${SUBNET}
     networks:
@@ -46,5 +51,7 @@ services:
 
   d3-brvs:
     container_name: d3-brvs-${SUBNET}
+    environment:
+      BILLING_URL: http://data-collector-${SUBNET}:8080
     networks:
     - d3-notary

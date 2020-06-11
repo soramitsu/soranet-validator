@@ -8,7 +8,6 @@ package com.d3.exchange.exchanger.context
 import com.d3.commons.sidechain.iroha.consumer.IrohaConsumer
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.exchange.exchanger.strategy.DcRateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
 import com.github.kittinunf.result.failure
 import iroha.protocol.Commands
 import jp.co.soramitsu.iroha.java.Transaction
@@ -18,36 +17,37 @@ import jp.co.soramitsu.iroha.java.Transaction
  */
 class DcExchangerContext(
     irohaConsumer: IrohaConsumer,
+    utilityIrohaConsumer: IrohaConsumer,
     queryhelper: IrohaQueryHelper,
     dcRateStrategy: DcRateStrategy,
-    liquidityProviderAccounts: List<String>,
-    tradingPairsHelper: TradingPairsHelper
+    liquidityProviderAccounts: List<String>
 ) : ExchangerContext(
     irohaConsumer,
+    utilityIrohaConsumer,
     queryhelper,
     dcRateStrategy,
     liquidityProviderAccounts,
-    tradingPairsHelper,
     irohaConsumer.creator
 ) {
 
     /**
      * Burns and mints corresponding fiat currencies together with sending
      */
-    override fun performTransferLogic(originalCommand: Commands.TransferAsset, amount: String) {
+    override fun performTransferLogic(
+        originalCommand: Commands.TransferAsset,
+        amount: String,
+        creationTime: Long
+    ) {
         val sourceAsset = originalCommand.assetId
         val srcAmount = originalCommand.amount
         val targetAsset = originalCommand.description
         val destAccountId = originalCommand.srcAccountId
 
-        val transactionBuilder = Transaction.builder(exchangerAccountId)
-        if (sourceAsset != XOR_ASSET_ID) {
-            transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
-        }
-        if (destAccountId != XOR_ASSET_ID) {
-            transactionBuilder.addAssetQuantity(targetAsset, amount)
-        }
-        irohaConsumer.send(
+        val transactionBuilder = Transaction.builder(exchangerAccountId, creationTime)
+        transactionBuilder.subtractAssetQuantity(sourceAsset, srcAmount)
+        transactionBuilder.addAssetQuantity(targetAsset, amount)
+        transactionBuilder.setQuorum(exchangerIrohaConsumer.getConsumerQuorum().get())
+        exchangerIrohaConsumer.send(
             transactionBuilder
                 .transferAsset(
                     exchangerAccountId,
@@ -60,9 +60,5 @@ class DcExchangerContext(
         ).failure {
             throw it
         }
-    }
-
-    companion object {
-        private const val XOR_ASSET_ID = "xor#sora"
     }
 }

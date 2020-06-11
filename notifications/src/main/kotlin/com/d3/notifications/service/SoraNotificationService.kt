@@ -6,7 +6,6 @@
 package com.d3.notifications.service
 
 import com.d3.chainadapter.client.RMQConfig
-import com.d3.commons.util.GsonInstance
 import com.d3.commons.util.createPrettyFixThreadPool
 import com.d3.notifications.NOTIFICATIONS_SERVICE_NAME
 import com.d3.notifications.event.*
@@ -61,6 +60,13 @@ class SoraNotificationService(rmqConfig: RMQConfig) : NotificationService, EthSp
         logger.info("Notify enough withdrawal proofs $ethWithdrawalProofsEvent")
         return Result.of {
             postSoraEvent(SoraEthWithdrawalProofsEvent.map(ethWithdrawalProofsEvent))
+        }
+    }
+
+    override fun notifyEthWithdrawalCommit(ackEthWithdrawalProofEvent: AckEthWithdrawalProofEvent): Result<Unit, Exception> {
+        logger.info("Notify Ethereum withdrawal commit $ackEthWithdrawalProofEvent")
+        return Result.of {
+            postSoraEvent(SoraAckEthWithdrawalProofEvent.map(ackEthWithdrawalProofEvent))
         }
     }
 
