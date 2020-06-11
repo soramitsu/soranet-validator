@@ -16,9 +16,12 @@ import com.d3.notifications.queue.EventsQueue
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.flatMap
 import com.github.kittinunf.result.map
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import mu.KLogging
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
+import java.util.concurrent.TimeUnit
 
 /**
  * Command handler that handles 'enough withdrawal proofs collected' events
@@ -31,7 +34,11 @@ class EthProofsCollectedCommandHandler(
 ) : CommandHandler() {
 
     // Collection that stores proof command that have been handled already
-    private val handledProofs = HashSet<String>()
+    private val handledProofs = CacheBuilder.newBuilder()
+        .expireAfterWrite(1, TimeUnit.DAYS)
+        .build<String, Boolean>(object : CacheLoader<String, Boolean>() {
+            override fun load(key: String) = false
+        })
 
     override fun handle(irohaCommand: IrohaCommand) {
         val command = irohaCommand.command
@@ -65,7 +72,7 @@ class EthProofsCollectedCommandHandler(
                     )
                     logger.info("Notify withdrawal proofs collected $ethWithdrawalProofsEvent")
                     eventsQueue.enqueue(ethWithdrawalProofsEvent)
-                    handledProofs.add(proofStorageAccount)
+                    handledProofs.put(proofStorageAccount, true)
                 } else {
                     logger.warn("Not enough withdrawal proofs collected")
                 }
@@ -78,7 +85,7 @@ class EthProofsCollectedCommandHandler(
         }
         val creator = irohaCommand.tx.payload.reducedPayload.creatorAccountId
         return creator == notificationsConfig.ethWithdrawalProofSetter &&
-                !handledProofs.contains(irohaCommand.command.setAccountDetail.accountId) &&
+                !handledProofs[irohaCommand.command.setAccountDetail.accountId] &&
                 irohaCommand.command.setAccountDetail.accountId.endsWith("@$ETH_WITHDRAWAL_PROOF_DOMAIN")
     }
 

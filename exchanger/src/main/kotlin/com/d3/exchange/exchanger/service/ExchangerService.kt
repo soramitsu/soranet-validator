@@ -30,14 +30,14 @@ class ExchangerService(
     fun start(): Result<Unit, Exception> {
         logger.info { "Exchanger service is started. Waiting for incoming transactions." }
         return chainListener.getBlockObservable().map { observable ->
-            observable.subscribe { (block, _) ->
+            observable.subscribe { (block, ack) ->
                 contexts.forEach { context ->
                     context.performConversions(block)
                 }
+                ack()
             }
         }.flatMap {
             chainListener.listen()
-
         }
     }
 

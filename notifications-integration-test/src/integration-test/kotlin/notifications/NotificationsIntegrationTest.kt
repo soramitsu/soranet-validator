@@ -238,4 +238,42 @@ class NotificationsIntegrationTest {
             Unit
         }.failure { ex -> fail(ex) }
     }
+
+    /**
+     * Note: Iroha must be deployed to pass the test.
+     * @given D3 client with enabled email notifications and notary account
+     * @when account receives Ethereum withdrawal commit
+     * @then D3 client is notified about withdrawal commit
+     */
+    @Test
+    fun testNotificationWithdrawalCommit() {
+        val irohaTxHash = "5DC4E41457FF8CA7CE7316B3CC471F9C7A641A237389783293A29C71A066E8B8"
+        val id = "id"
+        val time = System.currentTimeMillis()
+        val blockNum = 1L
+        val txIndex = 1
+        environment.eventsQueue.enqueue(
+            AckEthWithdrawalProofEvent(
+                irohaTxHash = irohaTxHash,
+                id = id,
+                txTime = time,
+                blockNum = blockNum,
+                txIndex = txIndex
+            )
+        )
+        Result.of {
+            Thread.sleep(WAIT_TIME)
+            val soraEvent =
+                gson.fromJson(
+                    environment.getLastSoraEvent().toString(),
+                    SoraAckEthWithdrawalProofEvent::class.java
+                )
+            assertEquals(irohaTxHash, soraEvent.irohaTxHash)
+            assertEquals(id, soraEvent.id)
+            assertEquals(time, soraEvent.txTime)
+            assertEquals(blockNum, soraEvent.blockNum)
+            assertEquals(txIndex, soraEvent.txIndex)
+            Unit
+        }.failure { ex -> fail(ex) }
+    }
 }

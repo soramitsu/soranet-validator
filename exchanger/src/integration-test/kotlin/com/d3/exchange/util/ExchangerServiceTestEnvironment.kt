@@ -13,9 +13,10 @@ import com.d3.commons.util.getRandomString
 import com.d3.exchange.exchanger.config.EXCHANGER_SERVICE_NAME
 import com.d3.exchange.exchanger.config.rmqConfig
 import com.d3.exchange.exchanger.context.CurveExchangerContext
+import com.d3.exchange.exchanger.context.DcExchangerContext
 import com.d3.exchange.exchanger.service.ExchangerService
 import com.d3.exchange.exchanger.strategy.CurveRateStrategy
-import com.d3.exchange.exchanger.util.TradingPairsHelper
+import com.d3.exchange.exchanger.strategy.DcRateStrategy
 import integration.helper.IrohaIntegrationHelperUtil
 import java.io.Closeable
 import java.math.BigDecimal
@@ -26,18 +27,28 @@ import java.math.BigDecimal
 class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegrationHelperUtil) :
     Closeable {
 
-    val exchangerAccount = integrationHelper.accountHelper.exchangerAccount
+    val cryptoExchangerAccountId = integrationHelper.accountHelper.cryptoExchangerAccount.accountId
 
-    private val exchangerAccountId = integrationHelper.accountHelper.exchangerAccount.accountId
+    val fiatExchangerAccountId = integrationHelper.accountHelper.fiatExchangerAccount.accountId
 
     private val testAccountId = integrationHelper.testCredential.accountId
 
-    val testDetailKey = "test"
+    private val cryptoExchangerCredential = IrohaCredential(
+        cryptoExchangerAccountId,
+        integrationHelper.accountHelper.cryptoExchangerAccount.keyPair
+    )
 
-    private val exchangerCredential =
-        IrohaCredential(exchangerAccount.accountId, exchangerAccount.keyPair)
+    private val fiatExchangerCredential = IrohaCredential(
+        fiatExchangerAccountId,
+        integrationHelper.accountHelper.fiatExchangerAccount.keyPair
+    )
 
-    private val irohaConsumer = IrohaConsumerImpl(exchangerCredential, integrationHelper.irohaAPI)
+    private val cryptoIrohaConsumer = IrohaConsumerImpl(cryptoExchangerCredential, integrationHelper.irohaAPI)
+
+    private val fiatIrohaConsumer = IrohaConsumerImpl(fiatExchangerCredential, integrationHelper.irohaAPI)
+
+    private val infoIrohaConsumer =
+        IrohaConsumerImpl(integrationHelper.testCredential, integrationHelper.irohaAPI)
 
     private val chainListener = ReliableIrohaChainListener(
         rmqConfig,
@@ -50,24 +61,35 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
     private lateinit var exchangerService: ExchangerService
 
     fun init() {
+        val feeFraction = BigDecimal(0.99)
+        var property = System.getProperty("DC_CONTAINER_IP")
+        if (property.isNullOrBlank()) {
+            property = "http://data-collector"
+        }
+        val baseRateUrl = "$property:8080/v1/rates"
         exchangerService = ExchangerService(
             chainListener,
             listOf(
                 CurveExchangerContext(
-                    irohaConsumer,
+                    cryptoIrohaConsumer,
+                    infoIrohaConsumer,
                     queryHelper,
                     CurveRateStrategy(
-                        exchangerAccountId,
+                        cryptoExchangerAccountId,
                         queryHelper,
-                        BigDecimal(0.99)
+                        feeFraction
                     ),
-                    listOf(testAccountId),
-                    TradingPairsHelper(
-                        testAccountId,
-                        testDetailKey,
-                        exchangerAccountId,
-                        queryHelper
-                    )
+                    listOf(testAccountId)
+                ),
+                DcExchangerContext(
+                    fiatIrohaConsumer,
+                    infoIrohaConsumer,
+                    queryHelper,
+                    DcRateStrategy(
+                        baseRateUrl,
+                        feeFraction
+                    ),
+                    listOf(testAccountId)
                 )
             )
         )

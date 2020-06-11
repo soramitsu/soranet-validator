@@ -10,5 +10,3 @@ class AssetNotFoundException(message: String, ex: Exception?) : Exception(messag
 class TooMuchAssetVolumeException(message: String) : Exception(message)
 
 class TooLittleAssetVolumeException(message: String) : Exception(message)
-
-class UnsupportedTradingPairException(message: String) : Exception(message)

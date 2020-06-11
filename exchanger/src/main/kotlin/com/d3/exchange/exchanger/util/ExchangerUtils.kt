@@ -12,6 +12,9 @@ private const val DELIMITER = '.'
  * @return String {0-9}*.{0-9}[precision]
  */
 fun respectPrecision(rawValue: String, precision: Int): String {
+    if (precision == 0) {
+        return rawValue.substringBefore(DELIMITER)
+    }
     val substringAfter = rawValue.substringAfter(DELIMITER)
     val diff = substringAfter.length - precision
     return when {
@@ -22,3 +25,13 @@ fun respectPrecision(rawValue: String, precision: Int): String {
             .plus(substringAfter.substring(0, precision))
     }
 }
+
+/**
+ * Returns the first half of the hash with block height added
+ */
+fun normalizeTransactionHash(hash: String, height: Long) = hash.substring(0..32).toLowerCase() + "_$height"
+
+/**
+ * Returns a string with an underscore and index being added
+ */
+fun addCommandIndex(str: String, commandIndex: Int) = "${str}_${commandIndex}"

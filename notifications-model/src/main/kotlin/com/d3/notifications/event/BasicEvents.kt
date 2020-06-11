@@ -191,12 +191,12 @@ data class ECDSASignature(
 
 /**
  * Class that holds information about acknowledged(used) Eth withdrawal proof event
- * @param proofEventId - id of acknowledged event
+ * @param irohaTxHash - id of acknowledged event
  * @param id - identifier of event
  * @param txTime - time of event
  */
 class AckEthWithdrawalProofEvent(
-    val proofEventId: String,
+    val irohaTxHash: String,
     id: String,
     txTime: Long,
     blockNum: Long,

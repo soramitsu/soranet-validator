@@ -28,6 +28,8 @@ pipeline {
           }
           sh "docker-compose -f deploy/docker-compose.yml -f deploy/docker-compose.ci.yml pull"
           sh(returnStdout: true, script: "docker-compose -f deploy/docker-compose.yml -f deploy/docker-compose.ci.yml up --build -d")
+          env.DC_CONTAINER_IP = sh(returnStdout: true, script: "docker inspect -f '{{range .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}' data-collector-${DOCKER_NETWORK} | head -1").trim()
+          sh 'echo "Set dc container ip $DC_CONTAINER_IP" '
 
           iC = docker.image("openjdk:8-jdk")
           iC.inside("--network='d3-${DOCKER_NETWORK}' -e JVM_OPTS='-Xmx3200m' -e TERM='dumb' -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
@@ -83,7 +85,6 @@ pipeline {
           sh "tar -zcvf build-logs/dokka.gz -C build/reports dokka || true"
           archiveArtifacts artifacts: 'build-logs/*.gz'
           sh "docker-compose -f deploy/docker-compose.yml -f deploy/docker-compose.ci.yml down"
-          cleanWs()
         }
       }
     }
@@ -108,6 +109,11 @@ pipeline {
               }
         }
       }
+    }
+  }
+  post {
+    cleanup {
+      cleanWs()
     }
   }
 }

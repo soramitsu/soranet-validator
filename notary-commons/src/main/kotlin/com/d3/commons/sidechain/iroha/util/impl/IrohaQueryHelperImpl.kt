@@ -128,7 +128,11 @@ open class IrohaQueryHelperImpl(
         writerAccountId: String,
         filterPredicate: (key: String, value: String) -> Boolean
     ): Result<Map<String, String>, Exception> =
-        irohaPaginationHelper.getPaginatedAccountDetailsFilter(storageAccountId, writerAccountId, filterPredicate)
+        irohaPaginationHelper.getPaginatedAccountDetailsFilter(
+            storageAccountId,
+            writerAccountId,
+            filterPredicate
+        )
 
     /** {@inheritDoc} */
     override fun getAccountDetailsCount(
@@ -136,7 +140,11 @@ open class IrohaQueryHelperImpl(
         writerAccountId: String,
         countPredicate: (key: String, value: String) -> Boolean
     ): Result<Int, Exception> =
-        irohaPaginationHelper.getPaginatedAccountDetailsCount(storageAccountId, writerAccountId, countPredicate)
+        irohaPaginationHelper.getPaginatedAccountDetailsCount(
+            storageAccountId,
+            writerAccountId,
+            countPredicate
+        )
 
     /** {@inheritDoc} */
     override fun getAccountDetails(
