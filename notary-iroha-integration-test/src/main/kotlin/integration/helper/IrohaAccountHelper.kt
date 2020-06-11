@@ -48,13 +48,6 @@ open class IrohaAccountHelper(private val irohaAPI: IrohaAPI, private val peers:
         )
     }
 
-    val ethProofStorageAccount by lazy {
-        createTesterAccount(
-            prefix = "eth_proof_storage",
-            domain = "ethWithdrawalProof"
-        )
-    }
-
     /**
      * Makes given account multisignature
      * @param account - account to make multisignature
