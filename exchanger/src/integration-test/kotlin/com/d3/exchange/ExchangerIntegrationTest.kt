@@ -6,7 +6,6 @@
 package com.d3.exchange
 
 import com.d3.commons.util.getRandomString
-import com.d3.commons.util.irohaEscape
 import com.d3.commons.util.toHexString
 import com.d3.exchange.util.ExchangerServiceTestEnvironment
 import integration.helper.D3_DOMAIN
@@ -29,8 +28,6 @@ private const val TRANSFER_WAIT_TIME = 7_500L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExchangerIntegrationTest {
-
-    private val gson = GsonInstance.get()
 
     private val integrationHelper = IrohaIntegrationHelperUtil()
 
