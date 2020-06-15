@@ -10,6 +10,7 @@ import iroha.protocol.BlockOuterClass
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
+import org.testcontainers.containers.DockerComposeContainer
 import org.testcontainers.containers.FixedHostPortGenericContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.images.builder.ImageFromDockerfile
@@ -133,3 +134,8 @@ class KGenericContainer(imageName: String) : GenericContainer<KGenericContainer>
 
 class KFixedHostPortGenericContainer(imageName: String) :
     FixedHostPortGenericContainer<KFixedHostPortGenericContainer>(imageName)
+
+class KDockerComposeContainer : DockerComposeContainer<KDockerComposeContainer> {
+    constructor(file: File) : super(file)
+    constructor(files: List<File>) : super(files)
+}

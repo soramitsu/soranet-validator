@@ -11,6 +11,8 @@ import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.util.GsonInstance
 import com.d3.commons.util.getRandomString
 import com.d3.commons.util.toHexString
+import integration.helper.DockerComposeStarter
+import integration.helper.IrohaDockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import integration.registration.RegistrationServiceTestEnvironment
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -29,6 +32,7 @@ import kotlin.test.assertNotNull
  * All accounts are created and have permissions.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(DockerComposeStarter::class)
 class SoraIntegrationTest {
 
     private val integrationHelper = IrohaIntegrationHelperUtil()

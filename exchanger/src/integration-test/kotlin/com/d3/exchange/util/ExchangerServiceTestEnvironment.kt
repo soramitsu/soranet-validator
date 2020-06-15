@@ -17,6 +17,7 @@ import com.d3.exchange.exchanger.context.DcExchangerContext
 import com.d3.exchange.exchanger.service.ExchangerService
 import com.d3.exchange.exchanger.strategy.CurveRateStrategy
 import com.d3.exchange.exchanger.strategy.DcRateStrategy
+import integration.helper.DockerComposeStarter.Companion.dcContainerIpProperty
 import integration.helper.IrohaIntegrationHelperUtil
 import java.io.Closeable
 import java.math.BigDecimal
@@ -62,11 +63,11 @@ class ExchangerServiceTestEnvironment(private val integrationHelper: IrohaIntegr
 
     fun init() {
         val feeFraction = BigDecimal(0.99)
-        var property = System.getProperty("DC_CONTAINER_IP")
+        var property = System.getProperty(dcContainerIpProperty)
         if (property.isNullOrBlank()) {
-            property = "http://data-collector"
+            property = "http://data-collector:8080"
         }
-        val baseRateUrl = "$property:8080/v1/rates"
+        val baseRateUrl = "http://$property/v1/rates"
         exchangerService = ExchangerService(
             chainListener,
             listOf(

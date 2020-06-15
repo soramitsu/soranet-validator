@@ -18,6 +18,7 @@ import com.d3.notifications.service.ETH_ASSET_ID
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.map
+import integration.helper.DockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import jp.co.soramitsu.iroha.java.Transaction
 import notifications.environment.NotificationsIntegrationTestEnvironment
@@ -26,12 +27,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
 import java.math.BigDecimal
 
 private const val WAIT_TIME = 5_000L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(DockerComposeStarter::class)
 class NotificationsIntegrationTest {
 
     private val gson = GsonInstance.get()

@@ -20,7 +20,10 @@ dependencies {
 
     // Iroha Pure Java library
     implementation 'com.github.hyperledger.iroha-java:client:6.1.0'
-    testImplementation 'com.github.hyperledger.iroha-java:testcontainers:6.1.0'
+    testImplementation group: 'org.testcontainers', name: 'testcontainers', version: '1.14.3'
+    testImplementation('com.github.hyperledger.iroha-java:testcontainers:6.1.0'){
+        exclude group: 'org.testcontainers', module: 'testcontainers'
+    }
 
     // logging
     implementation 'io.github.microutils:kotlin-logging:1.6.26'

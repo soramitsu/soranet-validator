@@ -2,13 +2,16 @@ package notifications
 
 import integration.helper.ContainerHelper
 import integration.helper.DEFAULT_RMQ_PORT
+import integration.helper.DockerComposeStarter
 import org.junit.Assert.assertTrue
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(DockerComposeStarter::class)
 class NotificationStartupIntegrationTest {
 
     private val containerHelper = ContainerHelper()

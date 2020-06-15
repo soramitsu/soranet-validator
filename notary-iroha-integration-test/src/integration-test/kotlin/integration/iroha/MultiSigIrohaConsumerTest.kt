@@ -8,6 +8,7 @@ package integration.iroha
 import com.d3.commons.sidechain.iroha.consumer.MultiSigIrohaConsumer
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import integration.helper.IrohaConfigHelper
+import integration.helper.IrohaDockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 private const val PEERS = 3
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(IrohaDockerComposeStarter::class)
 class MultiSigIrohaConsumerTest {
 
     private val timeoutDuration = Duration.ofMinutes(IrohaConfigHelper.timeoutMinutes)
