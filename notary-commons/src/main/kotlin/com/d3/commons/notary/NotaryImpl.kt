@@ -50,7 +50,7 @@ class NotaryImpl(
         amount: String,
         from: String
     ): IrohaTransaction {
-        logger.info { "Transfer $asset event: hash($hash) time($time) user($account) asset($asset) value ($amount)" }
+        logger.info { "Transfer $asset event: hash($hash) time($time) user($account) address($from) asset($asset) value($amount)" }
 
         val quorum = notaryIrohaConsumer.getConsumerQuorum().get()
         return IrohaTransaction(
@@ -66,7 +66,7 @@ class NotaryImpl(
                     notaryIrohaConsumer.creator,
                     account,
                     asset,
-                    from,
+                    hash,
                     amount
                 )
             )
@@ -84,7 +84,7 @@ class NotaryImpl(
         amount: String,
         from: String
     ): IrohaTransaction {
-        logger.info { "Transfer Iroha anchored $asset event: hash($hash) time($time) user($account) asset($asset) value ($amount)" }
+        logger.info { "Transfer Iroha anchored $asset event: hash($hash) time($time) user($account) address($from) asset($asset) value($amount)" }
         val quorum = notaryIrohaConsumer.getConsumerQuorum().get()
         return IrohaTransaction(
             notaryIrohaConsumer.creator,
@@ -95,7 +95,7 @@ class NotaryImpl(
                     notaryIrohaConsumer.creator,
                     account,
                     asset,
-                    from,
+                    hash,
                     amount
                 )
             )
