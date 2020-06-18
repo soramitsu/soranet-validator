@@ -43,7 +43,6 @@ pipeline {
                             sh "./gradlew codeCoverageReport --info"
                             sh "./gradlew dokka --info"
                             sh "./gradlew d3TestReport"
-
                         }
 
                         if (env.BRANCH_NAME == 'develop') {
@@ -80,8 +79,6 @@ pipeline {
                     sh ".jenkinsci/prepare-logs.sh"
 
                     archiveArtifacts artifacts: 'build-logs/*.gz'
-
-                    sh "docker-compose -f deploy/docker-compose.yml -f deploy/docker-compose.ci.yml down"
                 }
             }
         }

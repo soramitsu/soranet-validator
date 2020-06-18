@@ -12,7 +12,6 @@ import com.d3.commons.util.GsonInstance
 import com.d3.commons.util.getRandomString
 import com.d3.commons.util.toHexString
 import integration.helper.DockerComposeStarter
-import integration.helper.IrohaDockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import integration.registration.RegistrationServiceTestEnvironment
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3

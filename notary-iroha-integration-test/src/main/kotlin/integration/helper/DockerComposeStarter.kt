@@ -5,7 +5,6 @@
 
 package integration.helper
 
-import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.LoggerFactory
@@ -15,7 +14,16 @@ import org.testcontainers.containers.wait.strategy.WaitStrategyTarget
 import java.io.File
 import java.time.Duration
 
-open class DockerComposeStarter : BeforeAllCallback, AfterAllCallback {
+open class DockerComposeStarter : BeforeAllCallback {
+
+    open val irohaServiceName = "d3-iroha"
+
+    open val irohaHostServicesProperties = listOf(
+        "EXCHANGER_IROHA_HOSTNAME",
+        "ETH-DEPOSIT_IROHA_HOSTNAME",
+        "CHAIN-ADAPTER_IROHA_HOSTNAME",
+        "IROHA_HOST"
+    )
 
     open val composePath = File(System.getProperty("user.dir")).absolutePath +
             "/deploy/docker-compose.yml"
@@ -24,6 +32,19 @@ open class DockerComposeStarter : BeforeAllCallback, AfterAllCallback {
         LoggerFactory.getLogger(WaitingConsumer::class.java)
         KDockerComposeContainer(File(composePath))
             .withLocalCompose(true)
+            .withExposedService(
+                irohaServiceName,
+                50051,
+                object : WaitStrategy {
+                    override fun withStartupTimeout(startupTimeout: Duration?): WaitStrategy {
+                        return this
+                    }
+
+                    override fun waitUntilReady(waitStrategyTarget: WaitStrategyTarget?) {
+
+                    }
+                }
+            )
             .withExposedService(
                 dcServiceName,
                 dcServicePort,
@@ -56,7 +77,21 @@ open class DockerComposeStarter : BeforeAllCallback, AfterAllCallback {
     }
 
     override fun beforeAll(context: ExtensionContext?) {
+        if (context?.root?.getStore(ExtensionContext.Namespace.GLOBAL)?.get(startedTag) == true) return
         dockerEnvironment.start()
+        val irohaContainerName = dockerEnvironment
+            .getContainerByServiceName(irohaServiceName + "_1")
+            .get()
+            .containerInfo
+            .name
+            .replace("/", "")
+        println("IROHA HOST/CONTAINER NAME $irohaContainerName")
+        irohaHostServicesProperties.forEach {
+            System.setProperty(
+                it,
+                irohaContainerName
+            )
+        }
         System.setProperty(
             dcContainerIpProperty,
             "${dockerEnvironment.getServiceHost(
@@ -67,15 +102,14 @@ open class DockerComposeStarter : BeforeAllCallback, AfterAllCallback {
                 dcServicePort
             )}"
         )
-    }
 
-    override fun afterAll(context: ExtensionContext?) {
-        dockerEnvironment.close()
+        context?.root?.getStore(ExtensionContext.Namespace.GLOBAL)?.put(startedTag, true)
     }
 
     companion object {
         const val dcServiceName = "data-collector"
         const val dcServicePort = 8080
         const val dcContainerIpProperty = "DC_CONTAINER_IP"
+        const val startedTag = "STARTED_COMPOSE"
     }
 }

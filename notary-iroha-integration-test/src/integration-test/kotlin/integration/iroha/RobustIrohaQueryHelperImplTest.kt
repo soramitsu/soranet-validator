@@ -10,7 +10,7 @@ import com.d3.commons.sidechain.iroha.util.impl.RobustIrohaQueryHelperImpl
 import com.d3.commons.sidechain.iroha.util.impl.RobustQueryException
 import com.github.kittinunf.result.failure
 import integration.helper.ContainerHelper
-import integration.helper.IrohaDockerComposeStarter
+import integration.helper.DockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import jp.co.soramitsu.iroha.java.ErrorResponseException
 import jp.co.soramitsu.iroha.java.IrohaAPI
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.fail
 import kotlin.test.fail
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(IrohaDockerComposeStarter::class)
+@ExtendWith(DockerComposeStarter::class)
 class RobustIrohaQueryHelperImplTest {
 
     private val integrationHelperUtil = IrohaIntegrationHelperUtil()

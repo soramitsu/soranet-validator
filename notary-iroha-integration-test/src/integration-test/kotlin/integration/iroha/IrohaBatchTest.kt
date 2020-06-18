@@ -19,8 +19,8 @@ import com.d3.commons.util.getRandomString
 import com.d3.commons.util.hex
 import com.d3.commons.util.toHexString
 import integration.helper.D3_DOMAIN
+import integration.helper.DockerComposeStarter
 import integration.helper.IrohaConfigHelper
-import integration.helper.IrohaDockerComposeStarter
 import integration.helper.IrohaIntegrationHelperUtil
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.iroha.java.Utils
@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
 private const val BATCH_TIME_WAIT = 5000L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(IrohaDockerComposeStarter::class)
+@ExtendWith(DockerComposeStarter::class)
 class IrohaBatchTest {
 
     private val integrationHelper = IrohaIntegrationHelperUtil()
