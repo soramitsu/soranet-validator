@@ -44,7 +44,7 @@ dependencies {
     implementation group: 'com.github.kittinunf.result', name: 'result', version: '1.4.0'
 
     // Configuration
-    implementation group: 'com.jdiazcano.cfg4k', name: 'cfg4k-git', version: '0.9.41'
+    implementation group: 'com.jdiazcano.cfg4k', name: 'cfg4k-git', version: '0.9.5'
 }
 sonarqube {
     properties {

@@ -6,23 +6,28 @@
 package integration.helper
 
 import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.output.WaitingConsumer
 import org.testcontainers.containers.wait.strategy.WaitStrategy
 import org.testcontainers.containers.wait.strategy.WaitStrategyTarget
 import java.io.File
+import java.lang.reflect.Field
 import java.time.Duration
+import java.util.*
 
-open class DockerComposeStarter : BeforeAllCallback {
+
+open class DockerComposeStarter : BeforeAllCallback, BeforeEachCallback {
 
     open val irohaServiceName = "d3-iroha"
 
     open val irohaHostServicesProperties = listOf(
         "EXCHANGER_IROHA_HOSTNAME",
         "ETH-DEPOSIT_IROHA_HOSTNAME",
-        "CHAIN-ADAPTER_IROHA_HOSTNAME",
-        "IROHA_HOST"
+        "TEST_IROHA_HOSTNAME",
+        "IROHA_HOST",
+        "IROHA_HOSTNAME"
     )
 
     open val composePath = File(System.getProperty("user.dir")).absolutePath +
@@ -79,21 +84,19 @@ open class DockerComposeStarter : BeforeAllCallback {
     override fun beforeAll(context: ExtensionContext?) {
         if (context?.root?.getStore(ExtensionContext.Namespace.GLOBAL)?.get(startedTag) == true) return
         dockerEnvironment.start()
+        context?.root?.getStore(ExtensionContext.Namespace.GLOBAL)?.put(startedTag, true)
+    }
+
+    override fun beforeEach(context: ExtensionContext?) {
         val irohaContainerName = dockerEnvironment
             .getContainerByServiceName(irohaServiceName + "_1")
             .get()
             .containerInfo
             .name
             .replace("/", "")
-        println("IROHA HOST/CONTAINER NAME $irohaContainerName")
-        irohaHostServicesProperties.forEach {
-            System.setProperty(
-                it,
-                irohaContainerName
-            )
-        }
-        System.setProperty(
-            dcContainerIpProperty,
+
+        val envMap = irohaHostServicesProperties.associateWith { irohaContainerName }.toMutableMap()
+        envMap[dcContainerIpProperty] =
             "${dockerEnvironment.getServiceHost(
                 dcServiceName,
                 dcServicePort
@@ -101,9 +104,39 @@ open class DockerComposeStarter : BeforeAllCallback {
                 dcServiceName,
                 dcServicePort
             )}"
-        )
 
-        context?.root?.getStore(ExtensionContext.Namespace.GLOBAL)?.put(startedTag, true)
+        setEnv(envMap)
+    }
+
+    // Weirdest hack
+    @Throws(Exception::class)
+    @Suppress("UNCHECKED_CAST")
+    protected open fun setEnv(newEnvMap: Map<String, String>) {
+        try {
+            val processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment")
+            val theEnvironmentField: Field = processEnvironmentClass.getDeclaredField("theEnvironment")
+            theEnvironmentField.isAccessible = true
+            val env = theEnvironmentField.get(null) as MutableMap<String, String>
+            env.putAll(newEnvMap)
+            val theCaseInsensitiveEnvironmentField =
+                processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment")
+            theCaseInsensitiveEnvironmentField.isAccessible = true
+            val cienv = theCaseInsensitiveEnvironmentField.get(null) as MutableMap<String, String>
+            cienv.putAll(newEnvMap)
+        } catch (e: NoSuchFieldException) {
+            val classes: Array<Class<*>> = Collections::class.java.declaredClasses
+            val env = System.getenv()
+            for (cl in classes) {
+                if ("java.util.Collections\$UnmodifiableMap" == cl.name) {
+                    val field: Field = cl.getDeclaredField("m")
+                    field.isAccessible = true
+                    val obj: Any = field.get(env)
+                    val map = obj as MutableMap<String, String>
+                    map.clear()
+                    map.putAll(newEnvMap)
+                }
+            }
+        }
     }
 
     companion object {

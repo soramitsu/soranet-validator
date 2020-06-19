@@ -29,9 +29,9 @@ private const val TRANSFER_WAIT_TIME = 7_500L
 @ExtendWith(DockerComposeStarter::class)
 class ExchangerIntegrationTest {
 
-    private val integrationHelper = IrohaIntegrationHelperUtil()
+    private val integrationHelper by lazy { IrohaIntegrationHelperUtil() }
 
-    private val registrationServiceEnvironment = RegistrationServiceTestEnvironment(integrationHelper)
+    private val registrationServiceEnvironment by lazy { RegistrationServiceTestEnvironment(integrationHelper) }
 
     private val exchangerServiceEnvironment by lazy { ExchangerServiceTestEnvironment(integrationHelper) }
 
