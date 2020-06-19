@@ -73,7 +73,6 @@ pipeline {
                                     -Dsonar.login=${SONAR_TOKEN}"
                             }
                         }
-                
                     }
                     
                     publishHTML (target: [
@@ -84,7 +83,6 @@ pipeline {
                         reportFiles: 'd3-test-report.html',
                         reportName: "D3 test report"
                     ])
-
                 }
             }
 
@@ -121,7 +119,7 @@ pipeline {
                                             " -e TAG='${DOCKER_TAG}'"
 
                     iC = docker.image("gradle:4.10.2-jdk8-slim")
-                    iC.inside("${dockerRunArgs} ${dockerConfig}") {
+                    iC.inside("${dockerRunArgs} ${dockerVolumes} ${dockerPushConfig}") {
                         sh "gradle shadowJar"
                         sh "gradle dockerPush"
                     }
