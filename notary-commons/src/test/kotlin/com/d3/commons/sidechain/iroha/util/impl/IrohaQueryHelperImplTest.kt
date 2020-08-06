@@ -206,7 +206,10 @@ class IrohaQueryHelperImplTest {
      */
     @Test
     fun getAccountDetailsCountUnsatisfiablePredicate() {
-        assertEquals(0, queryHelper.getAccountDetailsCount(genericAccountId, genericAccountId) { _, _ -> false }.get())
+        assertEquals(
+            0,
+            queryHelper.getAccountDetailsCount(genericAccountId, genericAccountId) { _, _ -> false }.get()
+        )
         verify(queryAPI, times(calculatePaginationCalls(details.size, pageSize))).getAccountDetails(
             any(), any(), any(),
             any(), any(), any()
@@ -256,7 +259,10 @@ class IrohaQueryHelperImplTest {
     @Test
     fun getAccountDetailsFilteredUnsatisfiablePredicate() {
         assertTrue(
-            queryHelper.getAccountDetailsFilter(genericAccountId, genericAccountId) { _, _ -> false }.get().isEmpty()
+            queryHelper.getAccountDetailsFilter(
+                genericAccountId,
+                genericAccountId
+            ) { _, _ -> false }.get().isEmpty()
         )
         verify(queryAPI, times(calculatePaginationCalls(details.size, pageSize))).getAccountDetails(
             any(), any(), any(),
@@ -273,7 +279,10 @@ class IrohaQueryHelperImplTest {
     fun getAccountDetailsFilteredTautologyPredicate() {
         assertEquals(
             details.size,
-            queryHelper.getAccountDetailsFilter(genericAccountId, genericAccountId) { _, _ -> true }.get().size
+            queryHelper.getAccountDetailsFilter(
+                genericAccountId,
+                genericAccountId
+            ) { _, _ -> true }.get().size
         )
         verify(queryAPI, times(calculatePaginationCalls(details.size, pageSize))).getAccountDetails(
             any(), any(), any(),
@@ -301,6 +310,27 @@ class IrohaQueryHelperImplTest {
             any(), any(), any(),
             any(), any(), any()
         )
+    }
+
+    /**
+     * @given queryHelper and Iroha populated with details
+     * @when processAccountDetails() is called with a function that returns true on every value >=5
+     * @then processAccountDetails() supplied function got called needed number of times
+     */
+    @Test
+    fun getAccountDetailsProcessed() {
+        val fakeProcessor = spy(FakeEntryProcessor())
+        val function = { set: Set<Map.Entry<String, String>> -> fakeProcessor.process(set) }
+        queryHelper.processAccountDetails(
+            genericAccountId,
+            genericAccountId,
+            function
+        )
+        verify(queryAPI, times(calculatePaginationCalls(details.size, pageSize))).getAccountDetails(
+            any(), any(), any(),
+            any(), any(), any()
+        )
+        verify(fakeProcessor, times(10)).process(any())
     }
 
     /**
@@ -455,4 +485,8 @@ class IrohaQueryHelperImplTest {
             else -> detailsSize / pageSize + 1
         }
     }
+}
+
+class FakeEntryProcessor() {
+    fun process(arg: Set<Map.Entry<String, String>>) = Unit
 }

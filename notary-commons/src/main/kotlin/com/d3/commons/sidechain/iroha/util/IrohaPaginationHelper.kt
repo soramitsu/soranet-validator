@@ -120,9 +120,10 @@ class IrohaPaginationHelper(private val queryAPI: QueryAPI, private val pageSize
             )
             lastWriter = response.nextRecordId.writer
             lastKey = response.nextRecordId.key
-            var pageDetails: Iterable<Map.Entry<String, String>> = parseAccountDetailsJson(response.detail).get()
-                .getOrDefault(writerAccountId, emptyMap())
-                .entries
+            var pageDetails: Iterable<Map.Entry<String, String>> =
+                parseAccountDetailsJson(response.detail).get()
+                    .getOrDefault(writerAccountId, emptyMap())
+                    .entries
             if (shufflePage) {
                 pageDetails = pageDetails.shuffled()
             }
@@ -172,6 +173,39 @@ class IrohaPaginationHelper(private val queryAPI: QueryAPI, private val pageSize
 
         } while (response.hasNextRecordId())
         counter
+    }
+
+    /**
+     * Processes account details in paginated fashion
+     * @param storageAccountId - details holder account id
+     * @param writerAccountId - details setter account id
+     * @param function - function used to process the details
+     */
+    fun processPaginatedAccountDetails(
+        storageAccountId: String,
+        writerAccountId: String,
+        function: (Set<Map.Entry<String, String>>) -> Unit
+    ) = Result.of {
+        var lastWriter: String? = null
+        var lastKey: String? = null
+        do {
+            val response = queryAPI.getAccountDetails(
+                storageAccountId,
+                writerAccountId,
+                null,
+                pageSize,
+                lastWriter,
+                lastKey
+            )
+            lastWriter = response.nextRecordId.writer
+            lastKey = response.nextRecordId.key
+            function(
+                parseAccountDetailsJson(response.detail).get()
+                    .getOrDefault(writerAccountId, emptyMap())
+                    .entries
+            )
+        } while (response.hasNextRecordId())
+        Unit
     }
 
     fun getPaginatedAccountAssets(
