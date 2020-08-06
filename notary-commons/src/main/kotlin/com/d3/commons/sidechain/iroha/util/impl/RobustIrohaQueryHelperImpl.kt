@@ -37,7 +37,13 @@ class RobustIrohaQueryHelperImpl(
         storageAccountId: String,
         writerAccountId: String,
         firstPredicate: (key: String, value: String) -> Boolean
-    ) = retryQuery { irohaQueryHelper.getAccountDetailsFirst(storageAccountId, writerAccountId, firstPredicate) }
+    ) = retryQuery {
+        irohaQueryHelper.getAccountDetailsFirst(
+            storageAccountId,
+            writerAccountId,
+            firstPredicate
+        )
+    }
 
     override fun getAccountDetailsFirstShufflePage(
         storageAccountId: String,
@@ -59,13 +65,36 @@ class RobustIrohaQueryHelperImpl(
         storageAccountId: String,
         writerAccountId: String,
         filterPredicate: (key: String, value: String) -> Boolean
-    ) = retryQuery { irohaQueryHelper.getAccountDetailsFilter(storageAccountId, writerAccountId, filterPredicate) }
+    ) = retryQuery {
+        irohaQueryHelper.getAccountDetailsFilter(
+            storageAccountId,
+            writerAccountId,
+            filterPredicate
+        )
+    }
+
+    override fun processAccountDetails(
+        storageAccountId: String,
+        writerAccountId: String,
+        function: (Set<Map.Entry<String, String>>) -> Unit
+    ): Result<Unit, Exception> =
+        irohaQueryHelper.processAccountDetails(
+            storageAccountId,
+            writerAccountId,
+            function
+        )
 
     override fun getAccountDetailsCount(
         storageAccountId: String,
         writerAccountId: String,
         countPredicate: (key: String, value: String) -> Boolean
-    ) = retryQuery { irohaQueryHelper.getAccountDetailsCount(storageAccountId, writerAccountId, countPredicate) }
+    ) = retryQuery {
+        irohaQueryHelper.getAccountDetailsCount(
+            storageAccountId,
+            writerAccountId,
+            countPredicate
+        )
+    }
 
     override fun getAccount(accountId: String) = retryQuery { irohaQueryHelper.getAccount(accountId) }
 
@@ -82,9 +111,11 @@ class RobustIrohaQueryHelperImpl(
         key: String
     ) = retryQuery { irohaQueryHelper.getAccountDetails(storageAccountId, writerAccountId, key) }
 
-    override fun getAssetPrecision(assetId: String) = retryQuery { irohaQueryHelper.getAssetPrecision(assetId) }
+    override fun getAssetPrecision(assetId: String) =
+        retryQuery { irohaQueryHelper.getAssetPrecision(assetId) }
 
-    override fun getAccountAssets(accountId: String) = retryQuery { irohaQueryHelper.getAccountAssets(accountId) }
+    override fun getAccountAssets(accountId: String) =
+        retryQuery { irohaQueryHelper.getAccountAssets(accountId) }
 
     override fun getAccountAsset(accountId: String, assetId: String) =
         retryQuery { irohaQueryHelper.getAccountAsset(accountId, assetId) }
@@ -93,9 +124,11 @@ class RobustIrohaQueryHelperImpl(
 
     override fun getAccountQuorum(acc: String) = retryQuery { irohaQueryHelper.getAccountQuorum(acc) }
 
-    override fun getTransactions(hashes: Iterable<String>) = retryQuery { irohaQueryHelper.getTransactions(hashes) }
+    override fun getTransactions(hashes: Iterable<String>) =
+        retryQuery { irohaQueryHelper.getTransactions(hashes) }
 
-    override fun getSingleTransaction(hash: String) = retryQuery { irohaQueryHelper.getSingleTransaction(hash) }
+    override fun getSingleTransaction(hash: String) =
+        retryQuery { irohaQueryHelper.getSingleTransaction(hash) }
 
     override fun getPeersCount() = retryQuery { irohaQueryHelper.getPeersCount() }
 

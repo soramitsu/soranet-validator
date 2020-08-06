@@ -95,6 +95,18 @@ interface IrohaQueryHelper {
     ): Result<Map<String, String>, Exception>
 
     /**
+     * Retrieves account details by setter from Iroha and applies custom logic to them
+     * @param storageAccountId - account to read details from
+     * @param writerAccountId - account that has set the details
+     * @param function - function to be applied
+     */
+    fun processAccountDetails(
+        storageAccountId: String,
+        writerAccountId: String,
+        function: (Set<Map.Entry<String, String>>) -> Unit
+    ): Result<Unit, Exception>
+
+    /**
      * Retrieves the number of account details by setter filtered by predicate from Iroha
      * @param storageAccountId - account to read details from
      * @param writerAccountId - account that has set the details

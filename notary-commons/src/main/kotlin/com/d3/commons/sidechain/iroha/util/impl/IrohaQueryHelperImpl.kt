@@ -135,6 +135,18 @@ open class IrohaQueryHelperImpl(
         )
 
     /** {@inheritDoc} */
+    override fun processAccountDetails(
+        storageAccountId: String,
+        writerAccountId: String,
+        function: (Set<Map.Entry<String, String>>) -> Unit
+    ): Result<Unit, Exception> =
+        irohaPaginationHelper.processPaginatedAccountDetails(
+            storageAccountId,
+            writerAccountId,
+            function
+        )
+
+    /** {@inheritDoc} */
     override fun getAccountDetailsCount(
         storageAccountId: String,
         writerAccountId: String,
