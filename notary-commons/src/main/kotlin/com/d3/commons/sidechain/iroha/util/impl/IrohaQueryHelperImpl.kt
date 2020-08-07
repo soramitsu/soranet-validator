@@ -25,7 +25,7 @@ import kotlin.collections.HashMap
  * @param queryAPI - query API by Iroha-Java library
  * @param irohaPaginationHelper - Iroha pagination helper. Used to filter account details and such.
  */
-open class IrohaQueryHelperImpl(
+open class IrohaQueryHelperImpl @JvmOverloads constructor(
     private val queryAPI: QueryAPI,
     private val irohaPaginationHelper: IrohaPaginationHelper = IrohaPaginationHelper(queryAPI, 100)
 ) : IrohaQueryHelper {
