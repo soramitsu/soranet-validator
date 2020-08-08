@@ -44,6 +44,7 @@ abstract class ExchangerContext(
             GRANTED_KEY
         ).get()
         if (!optional.isPresent || optional.get() != GRANTED_VALUE) {
+            logger.info("Going to grant permissions to superuser")
             val createdTime = System.currentTimeMillis()
             exchangerIrohaConsumer.send(
                 Transaction.builder(exchangerAccountId, createdTime - (createdTime % MILLIS_IN_DAY))
@@ -62,7 +63,13 @@ abstract class ExchangerContext(
                         Primitive.GrantablePermission.can_set_my_quorum
                     )
                     .build()
-            )
+            ).fold({
+                logger.info("Successfully committed grant permissions")
+            }, {
+                logger.warn("Couldn't grant permissions", it)
+            })
+        } else {
+            logger.info("Permissions for superuser have already been granted")
         }
     }
 

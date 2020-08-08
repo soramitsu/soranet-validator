@@ -19,6 +19,7 @@ import com.d3.commons.util.getRandomString
 import com.d3.commons.util.hex
 import com.d3.commons.util.toHexString
 import integration.helper.D3_DOMAIN
+import integration.helper.DockerComposeStarter
 import integration.helper.IrohaConfigHelper
 import integration.helper.IrohaIntegrationHelperUtil
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigInteger
 import java.time.Duration
 import kotlin.test.assertEquals
@@ -39,6 +41,7 @@ import kotlin.test.assertTrue
 private const val BATCH_TIME_WAIT = 5000L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(DockerComposeStarter::class)
 class IrohaBatchTest {
 
     private val integrationHelper = IrohaIntegrationHelperUtil()

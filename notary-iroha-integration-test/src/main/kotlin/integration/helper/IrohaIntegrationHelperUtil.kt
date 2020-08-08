@@ -41,12 +41,11 @@ open class IrohaIntegrationHelperUtil(private val peers: Int = 1) : Closeable {
         }
     }
 
-    val testConfig = loadConfigs("test", TestConfig::class.java, "/test.properties").get()
-    val rmqConfig =
-        loadRawLocalConfigs("rmq", RMQConfig::class.java, "rmq.properties")
+    val testConfig by lazy { loadConfigs("test", TestConfig::class.java, "/test.properties").get() }
+    val rmqConfig by lazy { loadRawLocalConfigs("rmq", RMQConfig::class.java, "rmq.properties") }
     val testQueue = String.getRandomString(20)
 
-    val testCredential = IrohaCredential(testConfig.testCredentialConfig)
+    val testCredential by lazy { IrohaCredential(testConfig.testCredentialConfig) }
 
     open val accountHelper by lazy { IrohaAccountHelper(irohaAPI, peers) }
 

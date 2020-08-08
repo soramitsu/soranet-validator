@@ -9,16 +9,15 @@ import com.d3.commons.util.getRandomString
 import com.d3.commons.util.toHexString
 import com.d3.exchange.util.ExchangerServiceTestEnvironment
 import integration.helper.D3_DOMAIN
+import integration.helper.DockerComposeStarter
 import integration.helper.IrohaConfigHelper
 import integration.helper.IrohaIntegrationHelperUtil
 import integration.registration.RegistrationServiceTestEnvironment
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
 import java.time.Duration
 import kotlin.test.assertEquals
@@ -27,15 +26,17 @@ import kotlin.test.assertTrue
 private const val TRANSFER_WAIT_TIME = 7_500L
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(DockerComposeStarter::class)
 class ExchangerIntegrationTest {
 
-    private val integrationHelper = IrohaIntegrationHelperUtil()
+    private val integrationHelper by lazy { IrohaIntegrationHelperUtil() }
 
-    private val registrationServiceEnvironment = RegistrationServiceTestEnvironment(integrationHelper)
+    private val registrationServiceEnvironment by lazy { RegistrationServiceTestEnvironment(integrationHelper) }
 
-    private val exchangerServiceEnvironment = ExchangerServiceTestEnvironment(integrationHelper)
+    private val exchangerServiceEnvironment by lazy { ExchangerServiceTestEnvironment(integrationHelper) }
 
-    init {
+    @BeforeAll
+    fun setUpEnvironments() {
         exchangerServiceEnvironment.init()
         registrationServiceEnvironment.registrationInitialization.init()
 
